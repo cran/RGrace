@@ -1,0 +1,8 @@
+This directory contains  TextbookPSCyr free sans-serif fonts (regular,bold,italic). To use them to print graphics with rusian text annotations, *.pfb files have to be made available to ghostscript (copy them to /usr/share/ghostscript/fonts directory and add their description to ghostscript's Fontmap.GS file
+	/TextbookPSCyr-Italic 	(textb18.pfb);
+	/TextbookPSCyr-Regular 	(textb19.pfb);
+	/TextbookPSCyr-Bold	(textb20.pfb);
+)  
+For this fonts to be used in R postscript device, paths to *.afm files have to be specified as well as proper encoding vector (this one depends on locale, for ru_RU.KOI8-R locale use file koi8r.enc).
+
+ps.options(family=c(system.file("CyrFonts/textb19.afm",package="RGrace"),system.file("CyrFonts/textb20.afm",package="RGrace"),system.file("CyrFonts/textb18.afm",package="RGrace"),system.file("CyrFonts/textb18.afm",package="RGrace"),"sy______.afm"),encoding=system.file("CyrFonts/koi8r.enc",package="RGrace"),override.check=T,reset=F)

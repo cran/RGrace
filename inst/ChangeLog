@@ -1,0 +1,136 @@
+0.5.1-0.5.2
+	* Wrap RGrace into NAMESPACE
+	* New predefined hook - simple.calculus. 
+0.5.0-0.5.1
+	* Fix annotation text drawing on development version (future 2.1.0) of R.
+0.4.9-0.5.0
+	* Some new hooks added (move indexed poits along y axis, kernel smoothing).
+	* New fixes in save routine - now it handles vector pch, size etc. element's parameters.
+	* Fixes a bug in gtk interface in setting element's parameters - it's values got vectorized (due to unnamed parameter in  seq(along=...) and seq(length=...))   
+0.4.8-0.4.9
+	* Fix a bug with incomplete gp parameter for grid.data (it was broken somewhere around 0.4.3 version)
+	* Add optional wisards for reading/writing data.frames from/to MySQL database. Script for creation of this data base is included too.  
+	* It looks to me what RGrace is ready for CRAN. So the next release ("one half") I will try to upload there.
+0.4.7-0.4.8
+	* Add Download/Upload gtk forms to read/write data.frames from text files (it has a point of making RGrace usable without applying to command line)
+	* Add sample figure.startup script, which builds popup menu ("Hooks") by clicking on which user can select callback for the RGrace's hooks (on.select.element, on.select.region, on.select.points). The point is the same - making rGrace usable without applying to command line.
+	* All color selection combo-boxes now use palette() function instead of colors(). Old "named colors list" can be restored if before calling figure() user will issue command palette(colors()). Command like palette(terrain.colors(128)) allow user (if he want this) have smoothly varying fill color values along data line. 
+	* New Rd file RGrace-GUI with description of RGrace interface (somewhat updated version of the text on my homepage).
+	* Fixed a bug with wrong return value of panel(...) function.
+	* Append a couple of new examples to Rd files. 
+	* Relax a dependence on gtkDevice (old 0.5.4 version proved to be quite usable) 
+0.4.6-0.4.7
+	* Last-minute fixes in figure save procedure
+0.4.5-0.4.6
+	* Various small bugfixes (broken zoom stack, missed rescanning of elements in combo box after the current panel has been changed, "disabled" entries in combo - boxes, lost current graphic device after printing).
+	* Check RGrace with R 2.0.1. This required to fix load sequence of functions and packages. But it looks like R-team has completed its byte-compiler so all packages got byte-compiled during installation and  now runs a lot faster than before (with RGrace it looks like I have 50% gain). 
+	* Add a simple example function to draw  RGrace grobs over alternative (not Gtk) device. .z.interface function takes current device (whatever it is - x11() for example ) as a current.Figure and all graphic output RGrace will redirect to this device. Of course only CLI interaction is possible in this case.
+	* gp parameter of plotarea now applies to all subgrobs of plotarea grob except grid lines. Expression grid.edit(current.Figure$current.Panel$border$name,gp=gpar(...)) will apply new gp parameter to axis frame, ticks marks, ticks labels and axis label. In case you want to change appearance of grid lines (rare case I think) function  grid.edit(gPath(current.Figure$current.Panel$border$name,"setka1"),gp=gpar(...)) will help.
+	* Documentation upgrade.
+0.4.4-0.4.5
+	* Redesigning of internal structure of RGrace. All interface stuff is put in separate class and figure/panel functions now are independent of interface realization. It makes possible to build "RGrace-like" application with other toolkits (think about making a simple Tk-one) or on offscreen media (in Sweave for example).
+	* No user-visible changes (at least I hope)  
+0.4.3-0.4.4
+	* Added some controls to GUI window letting user to view and edit values of individual data points and their appearance. This is somehow fixed the problem with GUI editing of categorical data, although editor itself is quite basic (documentation will follow). 
+	* In function ggplot order and default values of arguments has changed. y now goes first, x is the next with the default value seq(y) - this enables users to issue commands like ggplot(c(1,2,3,4))
+	* Return to old format of saved figure's file (the newer format is very lengthy). Independent of format all saved files can be opened just the same. 
+0.4.1-0.4.3
+	* Added a submenu to the Plot menu which selects a backend for printing - png(),pdf(),postscript() and bitmap(device="pdfwrite"). The last has sense if you have ghostscript installed.
+	* The BULLET command draws a "dead miner" icon in legend box when panel or element referred to by BULLET's arguments can not be found. 
+0.4.0-0.4.1
+	* Fixed quite a number of bugs which has creeped in while I were busy making RGrace work under new version of grid.
+	* Dropped dependence on RGtkGlade. Although I hate doing this (Glade is a right thing - may be the best in Gtk toolkit), but in modern Linux distributions only glade libraries for Gtk2.0 are put in.
+	* Interface redesign. Dropped option menus on notebook and replaced them with combos. Graph Interaction radio-menu was converted into option menu, partly because I could not find RGtk routines for handling radio-menus, partly because I like to have before my eyes what kind of interaction context I am now in.
+	* RGrace now handles all types of symbol shapes (0-26, not 21-26 as before).   
+	* Run R CMD check and try to suppress all objections it has raised on RGrace documentation.
+	* Put an example into ggplot.Rd. 
+0.3.5-0.4.0
+	* Deprecated GtkText replaced with new GtkTextView widget. So glade file can be now viewed in the Glade2.
+0.3.4-0.3.5
+	* Backport to GTK+1.2
+0.3.3-0.3.4
+        * Better placement of axis labels and legend (now they can not overlap).
+        * GUI change - button Legend is added (creates a new legend for panel with element's labels).
+        * Fix a bug in annotations - they got erased if they had a frame and element's icon in the same time.
+0.3.2-0.3.3
+        * Fixes of bugs due to name conflict with on.select.element hook
+        * Documentation upgrade.
+        * One more hook introduced - figure.startup(). It is called once when a new figure is opened, and is a right place where to put your code if you want to customize figure's interface, adding menus to launch your own functions. 
+0.3.0-0.3.1
+	* 4 grid.scales are combined into one grid's grob (grid.plotarea). As grid.scales are no longer needed they are removed.
+	* Structure of RGrace save file has changed. All grobs in figure are simply dumped into the save file. Output is much longer but if the figure's grobs are tweaked through the command line the tweaks can be saved and restored.    
+0.2.5-0.3.0
+	* As it was promised - switched to grid-2.0.0. Now RGrace (former Disgrace) requires development version of R (future R-1.9.0), grid-2.0.0 (not the one in R-1.9.0 tree) and gtkDevice-0.5.4
+	* RGrace and Disgrace are NOT compatible (so the new name)
+	* This version is one to one port of Disgrace-0.2.5.
+	* Access to handle parameter in hooks is changed. To get properties of handle use grid.get(handle$name)$<field name> (as for standard R structure). To edit properties use grid.edit(handle$name,<field name>=<new value>,...,redraw=(T|F))) 
+0.2.4-0.2.5
+	* Documentation upgrade.
+	* Fixed a bug with axes legend which is got lost after copy/pasting.
+	* Wish-list
+	           * Switch to GTK2. It is not stable now (and I do not hear what bindings for R are planned), but GTK2 has its strong features (support for frame-buffer devices, for example). It also gets harder to support GTK1.2 applications in newer Linux distributions.
+		   * Switch to grid-2.0 (planned for 2.0 release of R).
+0.2.3-0.2.4
+	* Legend-like annotations are complete. Use a command BULLET(panel=n,element=m) (no quotes!) in a Annotation text field to have a small icon representing an m'th element in n'th panel in the selected annotation (the next string or expression line in Annotation text box will be a description of this icon). More documentation will follow.
+	* There is no more grid.symbols grob. Grid.data now has no sub-grobs and all drawing is done inside this object. It should reduce memory consumption as line node's coordinates are stored in one place.
+	* library(Disgrace) command automatically opens one figure() window.
+	* some fixes in Copy/Paste interface.
+0.2.2-0.2.3
+	* Instead of grid.text grob Disgrace now uses grid.annotation grob (no documentation for a while) for text annotations. It accepts list of strings and expressions as label parameter to draw multilined text annotation and optionally can have a frame around it. It is a "wanna-be" legend structure and supposed to (in near future) include list fields of class grob too.
+	* Description field is gone from the Elements notebook leaf.
+	* Edit menu. User can copy and paste elements and panels from/to internal paste buffer in an R - session. 
+0.2.1-0.2.2
+	* Add cross-hairs marking selected region. This has required some C-coding so Disgrace now is not written totally in R ;( Compiler flags (gtk-1.2, gdk-1.2, glib-1.2 includes and libs) are collected in Makevars file so if you will have problems compiling Disgrace look into this file and substitute values relevant to your system.
+0.2.0-0.2.1
+	* Fix a bug with printing when deleted panels shows up as a frame around figure in postscript file.
+0.1.9-0.2.0
+	* Start writing .Rd documentation
+	* Fixed bug with data lines redrawing twice after editing or zooming
+	* Two new callback handlers are written - move.indexed (suitable for on.select.data - moves selected point on data line to point where mouse button has been released) and spline.data (suitable for on.select.points - draws a smoothed spline through points user has selected)
+	* Some code cleanups in printing and saving procedures.
+0.1.8-0.1.9
+	* Fixed bug that was present since 0.1.5 - figure became unfunctional then invalid color name have been assigned to element or annotations.
+	* Add graceful handling of incomplete gpar specifications (it is impossible to do through GUI but very common when adding elements and annotations through panel's methods). Now when in GUI any gpar size are set to 0 or gpar color have value default - this means that respective field in gpar structure are omitted.
+	* Panel and figure structures are now "classified" (class figure and panel - what else do your expect?). print.figure() just return "Figure" message, print.panel() return it's Plabel (under which it's present in Panels combobox).
+	* Add two utility functions log10.ticks and loge.ticks which draws axis ticks in log10 and natural logarithm positions. Labels are powers of ten.
+	* One more TODO wish: Make internal copy buffer to copy elements, annotations and panels between figures/panels (Some sort of Edit menu).
+0.1.7-0.1.8
+	* GUI rearrangement. Add color, fontface and fontsize selection to annotations and 2 buttons to apply font face and size  to all annotations in current panel and figure.
+	* Default hooks are changed. Now on.select.region/points/element report their parameters to global environment as .HANDLE,.INDEX,.REG,.DATA matrices.
+	* Add zoom and point stack. Clicking Esc after zooming restores previous state until stack is empty. Points stack holds coordinates of all previously selected points.
+	Hitting Esc deletes the last one, hitting Enter resets points stack to NULL. on.select.points called in these cases too.    
+	* data parameter to on.select.points is a matrix with coordinates of points selected so far (ie points stack).
+	* ggplot() and element() have 2 new parameters w and h (width and height). They are used to draw error bars (vertical and horizontal).
+	* Rearrangement of grobs structures. Hope they will take less memory and will work faster.
+	Now there are 3 structures -  grid.symbols (draw symbols with err. bars), grid.data (draw line and symbols), grid.scale (tick marks, tick labels and axis title)
+	* Hmm... Looks like Disgrace now is more or less complete. So TODO list:
+		x Write Rd documentation
+		* Add figure-wide Legend (I have inserted Description field -not functional now - into Elements - this is a text what would appear in legend)
+		x Make some sort of rubberboxes appearing when region selection is in progress (without redrawing of panels - this is the most hard part).   
+0.1.6-0.1.7
+	* All hooks now take 4 parameters (some of them may be NULL) on.select.xxx(region,handle,index,data)
+	* All hooks are called when mouse button are released - region parameter is a region between press and release points.
+	* Graph interaction type is now figure-wide (not global)
+	* Fix bug with axis flipping after zooming.
+	* Blank functions are inserted as default hooks (it keeps R away from complaining about on.select.xxx not found)
+	* Annotation's dragging handling is transferred into default "on.select.annotation" hook. If you do not like draggable text set this hook to NULL.
+0.1.5-0.1.6
+	* Method "annotation()" added to panel structure (works practically the same as element())
+	* Annotations are saved with the figure too.
+	* many fixes with current.Figure sets and resets
+0.1.4-0.1.5
+	* More smart (and tricky) method of axis ticks/labels calculation. In simple cases works (hopefully!) as before. In hard cases you may specify very fancy axis labels or ticks positions calculation algorithm. Now it is possible to draw nonlinear axis.
+	* Add a call to gtkSetLocale. So GUI is localized now.
+	* As Jeff Gentry pointed out I have misprinted RGtkGlade name through out documentation. Fixed.
+0.1.3-0.1.4
+	* After long meditation grid.data is now splitted on 2 sub-grobs - grid.points and grid.lines. grid.points are now always drawn with lty=1. It fixes bug with curves disappearing when lty set to 0 (no line) with symbol=triangle,diamond.
+	* "Quit" menu and figure "delete-event" share the common callback.
+0.1.2-0.1.3
+	* "Rotation" spinbox for annotations is now functional
+	* Missed callbacks for "Save" and "Quit" menus are inserted
+	* if current.Figure has been closed the current.Figure variable is set to NULL. So ggplot() after that works correctly - opens new figure.
+0.1.1-0.1.2
+	* bug fix - text annotations now are draggable by mouse
+	* small code rewrite - grob properties of object foo are now set at once - grid.edit(foo,grid.prop.list(prop1=val1,prop2=val2,..),redraw=T)
+	* opening saved figure through  menu now erase all panels in current figure and then load saved file
+

@@ -1,0 +1,49 @@
+useDynLib("RGrace")
+
+#export general functions
+export(
+"ggplot",
+"figure",
+".z.interface",
+"figure.back",
+".GTK.interface"
+)
+
+#export grid functions
+export("grid.annotation",
+"grid.data",
+"grid.plotarea")
+
+#export hooks
+export(
+"default.hook",
+"default.annotation",
+"delete.in.range",
+"lf.in.range",
+"sort.data",
+"move.indexed",
+"move.indexed.y",
+"smooth.data",
+"spline.data",
+"spline.points",
+"simple.calculus"
+)
+
+#misc utilities 
+export(
+"default.hooks",
+"log10.ticks",
+"loge.ticks",
+"BULLET"
+)
+
+S3method("drawDetails", "annotation")
+S3method("preDrawDetails","annotation")
+S3method("postDrawDetails","annotation")
+S3method("drawDetails", "data")
+S3method("validDetails", "data")
+S3method("editDetails", "plotarea")
+S3method("print","panel")
+S3method("print","figure")
+S3method("print","extplotmath")
+

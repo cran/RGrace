@@ -1,0 +1,35 @@
+\documentclass[a4paper]{article}
+\title{Simple example of RGrace usage in Sweave files}
+\author{M Kondrin}
+\sloppy
+\begin{document}
+\maketitle
+
+Because RGrace graphic is purely dynamic, user has to follow some rules to get a decent graphic output in Sweave file. First of all, no editing of Grobs is possible in Sweave (as a particular case automatic rescaling of panels should be avoided). Editing of Grobs drawn on non-interactive device (like postscript or pdf) results in  newpage being started, so this will lead to creation of multi-page pdf and/or eps output files, that is not the thing we would like to have in Sweave. Here is an example of how RGrace inclusion into Sweave can be done:
+
+
+<<results=verbatim,echo=TRUE,fig=TRUE>>=
+y <- 1+1
+n <- 100
+a <- rnorm(n)
+b <- 1 - 2*a + rnorm(n)
+p <- figure(cells=12)$panel(x=c(3,11),y=c(2,10), scale.X=range(a), scale.Y=range(b))
+p$element(b, a, pch=22, size=0.7, gp=gpar(col="black",fill="tomato3",lty=0), rescale=F)
+p$annotation(x=range(a)[[1]], y=range(b)[[2]], label=list("Sweave output:", BULLET(1,1), "test curve"))
+figure<-.z.interface
+@
+
+We have created new figure and panel on it with ranges wide enough for all our data to be drawn. All graphic parameters of data line and annotation are defined at the time of element/annotation creation and should not be changed afterwards in this code chunk.
+
+The purpose of \texttt{figure<-.z.interface} line is switching from the default RGrace interface (ususlly GTK one) to a generic one.  Code chunks in Sweave are run (at most) three times: first time the output is directed to interactive device (whatever it is) which is present when \texttt{Sweave()} command is issued and one or more times for eps and pdf devices which are automatically opened by Sweave to get a hardcopy of chunks with option \texttt{fig=TRUE}. Compare the results of previous code on gtkDevice, in RGrace-001.pdf and RGrace-001.eps files - they are all different. \texttt{.z.interface} hijacks these non-interactive devices to make them suitable for RGrace output.
+
+As sweave is executed in global environment we have to do some sort of cleanup to return default \texttt{figure} procedure. This is done with the next code chunk which should be included into Sweave file after every code chunk which produces RGrace output:
+
+<<results=verbatim,echo=TRUE>>=
+figure<-.GTK.interface
+@
+
+Have fun!
+
+
+\end{document}
