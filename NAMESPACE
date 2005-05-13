@@ -34,6 +34,8 @@ export(
 "default.hooks",
 "log10.ticks",
 "loge.ticks",
+#"wisard.in",
+#"wisard.out",
 "BULLET"
 )
 

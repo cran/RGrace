@@ -63,7 +63,9 @@ drawDetails.data <- function(x, recording) {
       .Call.graphics("L_segments",z1,h1,z1,h2,PACKAGE="grid")
       .Call.graphics("L_segments",z2,h1,z2,h2,PACKAGE="grid")
     }
-    .Call.graphics("L_points", unit(x$x,"native"), unit(x$y,"native"), x$pch, unit(x$size,"char"),PACKAGE="grid")
+    if (x$pch<26){
+      .Call.graphics("L_points", unit(x$x,"native"), unit(x$y,"native"), x$pch, unit(x$size,"char"),PACKAGE="grid")
+    }
     if (!is.null(gp1)) {
       grid:::set.gpar(x$gp)
     }
@@ -117,10 +119,10 @@ editScaleProp <- function(x){
     range <- x$vp$yscale
   }
   if (!is.null(range)) {
-    at.ticks <- eval(at.exp,list(RANGE=range,TICK.LAB="tick"))
+    at.ticks <- formatC(eval(at.exp,list(RANGE=range,TICK.LAB="tick")))
     if (is.null(at.ticks)) { at.ticks <- grid.pretty(range) }
     at.labels <- eval(at.exp,list(RANGE=range,TICK.LAB="label"))
-    if (is.null(at.labels)) { at.labels <- as.character(at.ticks)}
+    if (is.null(at.labels)) { at.labels <- lapply(gsub("e","~10^",formatC(grid.pretty(at.ticks))),function(x){parse(text=x)})}
   } else {
     at.ticks <- Inf
     at.labels <- "Inf"
@@ -185,7 +187,7 @@ editScaleProp <- function(x){
     x <- editGrob(x,x0=unit(0,"npc"),y0=tick.y0,x1=unit(1,"npc"),y1=tick.y0,vp=x$vp,gPath="setka")
   }
 }
-  x <- editGrob(x,label=as.character(at.labels), x=label.x, y=label.y, just=just, rot=rot,vp=x$vp, gPath="labels")
+  x <- editGrob(x,label=at.labels, x=label.x, y=label.y, just=just, rot=rot,vp=x$vp, gPath="labels")
 
   x
 }
@@ -254,7 +256,12 @@ editTicks <- function(x){
       at.ticks <- eval(at.exp,list(RANGE=range,TICK.LAB="tick"))
       if (is.null(at.ticks)) { at.ticks <- grid.pretty(range) }
       at.labels <- eval(at.exp,list(RANGE=range,TICK.LAB="label"))
-      if (is.null(at.labels)) { at.labels <- as.character(at.ticks)}
+      if (is.null(at.labels)) {
+        at.labels <- parse(text=gsub("e","%*%10^",as.character(at.ticks)))
+      } else {
+        at.labels<-as.character(at.labels)
+      }
+    
     } else {
       at.ticks <- Inf
       at.labels <- "Inf"
@@ -302,17 +309,17 @@ editTicks <- function(x){
            label.x <- unit(1, "npc") + unit(1-offset, "char") 
          }
          )
-  x <<- editGrob(x,x0=tick.x0,y0=tick.y0,x1=tick.x1,y1=tick.y1,vp=x$vp,gPath=paste("ticks",z,sep=""),strict=TRUE)
+  x <- editGrob(x,x0=tick.x0,y0=tick.y0,x1=tick.x1,y1=tick.y1,vp=x$vp,gPath=paste("ticks",z,sep=""),strict=TRUE)
   if (!x$grilled) {
-    x <<- editGrob(x,x0=unit(Inf,"npc"),y0=unit(0,"npc"),x1=unit(Inf,"npc"),y1=unit(1,"npc"),vp=x$vp,gPath=paste("setka",z,sep=""),strict=TRUE)
+    x <- editGrob(x,x0=unit(Inf,"npc"),y0=unit(0,"npc"),x1=unit(Inf,"npc"),y1=unit(1,"npc"),vp=x$vp,gPath=paste("setka",z,sep=""),strict=TRUE)
   } else {
   if(z%in%c(1,2)){
-    x <<- editGrob(x,x0=tick.x0,y0=unit(0,"npc"),x1=tick.x0,y1=unit(1,"npc"),vp=x$vp,gPath=paste("setka",z,sep=""),strict=TRUE)
+    x <- editGrob(x,x0=tick.x0,y0=unit(0,"npc"),x1=tick.x0,y1=unit(1,"npc"),vp=x$vp,gPath=paste("setka",z,sep=""),strict=TRUE)
   } else {
-    x <<- editGrob(x,x0=unit(0,"npc"),y0=tick.y0,x1=unit(1,"npc"),y1=tick.y0,vp=x$vp,gPath=paste("setka",z,sep=""),strict=TRUE)
+    x <- editGrob(x,x0=unit(0,"npc"),y0=tick.y0,x1=unit(1,"npc"),y1=tick.y0,vp=x$vp,gPath=paste("setka",z,sep=""),strict=TRUE)
   }
 }
-  x <<- editGrob(x,label=as.character(at.labels), x=label.x, y=label.y, just=just, rot=rot,vp=x$vp, gPath=paste("labels",z,sep=""),strict=TRUE)
+  x <- editGrob(x,label=at.labels, x=label.x, y=label.y, just=just, rot=rot,vp=x$vp, gPath=paste("labels",z,sep=""),strict=TRUE)
     switch (z,
           {
             x<<-editGrob(x,y=unit(-1.5,"char")+label.y,gPath=paste("tag",z,sep=""),vp=x$vp,strict=TRUE)
@@ -321,10 +328,10 @@ editTicks <- function(x){
             x<<-editGrob(x,y=unit(1.5,"char")+label.y,gPath=paste("tag",z,sep=""),vp=x$vp,strict=TRUE)
           },
           {
-            x<<-editGrob(x,x=unit(-1,"strwidth",as.character(at.labels))+unit(-1.5,"char")+label.x,gPath=paste("tag",z,sep=""),vp=x$vp,strict=TRUE)
+            x<<-editGrob(x,x=-1*grobWidth(getGrob(x,"labels3",strict=TRUE))+unit(-0.5,"char")+label.x,gPath=paste("tag",z,sep=""),vp=x$vp,strict=TRUE)
           },
           {
-            x<<-editGrob(x,x=unit(1,"strwidth",as.character(at.labels))+unit(1.5,"char")+label.x,gPath=paste("tag",z,sep=""),vp=x$vp,strict=TRUE)
+            x<<-editGrob(x,x=grobWidth(getGrob(x,"labels4",strict=TRUE))+unit(0.5,"char")+label.x,gPath=paste("tag",z,sep=""),vp=x$vp,strict=TRUE)
           }
           )
   })

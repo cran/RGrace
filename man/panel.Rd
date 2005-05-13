@@ -11,7 +11,9 @@
 panel( x=c(2,9), y=c(2,9), scale.X=c(-10,10), scale.Y=c(-10,10),
 xticks=c("","Inf"), yticks=c("","Inf"), xlab=c("X Label",""),
 ylab=c("YLabel", ""), ticks.in=TRUE, grill=FALSE,
-Plabel=paste("Panel",panelsCount), GROB=NULL, select=0, update.GUI=T)
+Plabel=paste("Panel",panelsCount),
+gp=gpar(lwd=2,fontsize=12,fontface=1),
+GROB=NULL, select=0, update.GUI=T)
 }
 }
 
@@ -58,10 +60,13 @@ Plabel=paste("Panel",panelsCount), GROB=NULL, select=0, update.GUI=T)
     function return \code{select}-th panel from figure's internal panel
     stack.
   }
+  \item{gp}{
+    graphic parameters of underlying \code{\link{grid.plotarea}} GROB.
+  }
   \item{update.GUI}{
-    If \code{TRUE} widgets in figure are updated to reflect changes in
-    panels properties. Setting to \code{FALSE} are useful only then you
-    changes properties of several panels in a loop and don't want
+    If \code{TRUE} widgets in figure are updated to reflect changes of
+    panel's properties. Setting to \code{FALSE} is useful only then you
+    change properties of several panels in a loop and don't want
     figure to be updated after every iteration. 
     }
     
@@ -97,7 +102,7 @@ Plabel=paste("Panel",panelsCount), GROB=NULL, select=0, update.GUI=T)
 
 \seealso{
   \code{\link{element}}, \code{\link{annotation}},
-  \code{\link{grid.data}}, \code{\link[grid]{grid.text}}, 
+  \code{\link{grid.data}}, \code{\link{grid.plotarea}}, \code{\link[grid]{grid.text}}, 
   \code{\link[base]{assign}}, \code{\link[base]{get}}
   
 }

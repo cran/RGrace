@@ -1,3 +1,10 @@
+0.5.2-0.5.3
+	* Some bug-fixes (in database interface).
+	* Better calculation of axis tags positions
+	* Ticks' labels now drawn as plotmath. That is - for label like "2e-5" expression(2%*%10^-5) is drawn instead.
+	* If pch of grid.data > 26 then symbols are not drawn at all (supress warnings from latest grid 2.1.0 library) 
+	* On hardcopy output instead of default transparent background the background grid.rect is drawn filled with ps.options()$bg color.
+	* gp parameter is added to panel() function (it is passed directly as gp parameter to grid.plotarea function). This parameter would be written into the figure save-script too.
 0.5.1-0.5.2
 	* Wrap RGrace into NAMESPACE
 	* New predefined hook - simple.calculus. 

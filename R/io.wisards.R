@@ -18,7 +18,7 @@ wisard.in <- function(frame,frame.name){
     }
     z <- ls(envir=parent.env(environment()))
 #    print(z)
-    attach(frame)
+    fr.env<-attach(frame)
     f <- grep("\.role\.w",z,extended=TRUE,value=TRUE)
     f <- gsub("\.role\.w","",f,extended=TRUE)
     draw.frame <- frame
@@ -32,7 +32,7 @@ wisard.in <- function(frame,frame.name){
         next
       }
       z2 <- get(paste(i,".name.w",sep=""))
-      p <- eval(parse(text=z2$GetText()))
+      p <- eval(parse(text=z2$GetText()),envir=fr.env)
       draw.frame[[l]] <- p
 
       comment(draw.frame[[l]])<-z2$GetText()

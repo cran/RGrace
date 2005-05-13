@@ -36,13 +36,19 @@
   \code{figure.startup} is called every time new figure is opened. This
   hook is primaraly intended to put some interface customization code in
   (for example to create user-specific gtk-menu in menubar).
+
+  Rather than calling these functions "by hand" the end-user is expected
+  to write his own function and assign this function to the globally
+  defined entry-points (for example \code{on.select.element<-my.own.hook}).  
 }
-\usage{
-on.select.element<-function{reg,handle,index,data}{}
-on.select.region<-function{reg,handle,index,data}{}
-on.select.annotation<-function{reg,handle,index,data}{}
-on.select.points<-function{reg,handle,index,data}{}
-figure.startup<-function(figure){}
+\section{Entry-points}{
+  \code{
+on.select.element(reg,handle,index,data)
+on.select.region(reg,handle,index,data)
+on.select.annotation(reg,handle,index,data)
+on.select.points(reg,handle,index,data)
+figure.startup(figure)
+}
 }
 
 \arguments{
@@ -61,7 +67,7 @@ figure.startup<-function(figure){}
     this is the "grid.data" structure of element closest to the point
     where the left mouse button has been pressed. For
     \code{on.select.region} this is the same "grid.data" that has been
-    previously selected by \code{on.select.data}. For
+    previously selected by \code{on.select.element}. For
     \code{on.select.annotation} this is the "grid.annotation" structure of
     annotation closest to the point
     where the left mouse button has been pressed. For
@@ -97,7 +103,7 @@ figure.startup<-function(figure){}
 
 \details{
   RGrace are equipped with a number of predefined hooks. Default hooks
-  for \code{on.select.data}, \code{on.select.region},
+  for \code{on.select.element}, \code{on.select.region},
   \code{on.select.points} (\code{default.hook}) report their input parameters
 	to global environment as
 	\code{.REG},\code{.HANDLE},\code{.INDEX},\code{.DATA}
@@ -190,11 +196,11 @@ fitfun<-function(par,x,y,dimensions){
 #the hook itself
 #it is expected that .DATA global variable already holds 
 #the data we want to fit. This means either on.select.element or
-#on.select.region set to default.hook(). Then user should select points 
+#on.select.region is set to default.hook(). Then user should select points 
 #where he would expect the peaks maxima to be located. 
 #When done, hitting "Enter" key will start the fitting itself.
 on.select.points <- function(reg,handle,index,data){
-  #Test all peaks are selected.
+  #Test all peaks have been selected.
   if (is.null(reg)){
     #first guess - not very smart
     par <- cbind(data[,1],data[,1]/100.)

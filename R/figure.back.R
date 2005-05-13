@@ -38,7 +38,7 @@ figure.back<- function(width=640,height=480,cells=10){
   }
 
   
-  panel<-function(x=c(2,9),y=c(2,9),scale.X=c(-10,10),scale.Y=c(-10,10),xticks=c("","Inf"),yticks=c("","Inf"),xlab=c("X Label",""),ylab=c("Y Label", ""),ticks.in=TRUE,grill=FALSE,Plabel=paste("Panel",panelsCount),GROB=NULL,select=0,update.GUI=TRUE ){
+  panel<-function(x=c(2,9),y=c(2,9),scale.X=c(-10,10),scale.Y=c(-10,10),xticks=c("","Inf"),yticks=c("","Inf"),xlab=c("X Label",""),ylab=c("Y Label", ""),ticks.in=TRUE,grill=FALSE,Plabel=paste("Panel",panelsCount),gp=gpar(lwd=2,fontsize=12,fontface=1),GROB=NULL,select=0,update.GUI=TRUE ){
     edit <- function(...,scale.X=NULL,scale.Y=NULL,x=NULL,y=NULL, update.GUI=TRUE){
       if (is.null(scale.X)&is.null(scale.Y)&is.null(x)&is.null(y)){
         grid.edit(border$name,...,redraw=TRUE,strict=TRUE)
@@ -143,7 +143,7 @@ figure.back<- function(width=640,height=480,cells=10){
       set.active()
       if (is.null(GROB)){
         vp<-viewport(layout.pos.row=y,layout.pos.col=x,xscale=scale.X,yscale=scale.Y)
-        border <- grid.plotarea(inward=ticks.in,grilled=grill,at=c(xticks,yticks),label=c(xlab,ylab),title=Plabel,vp=vp)
+        border <- grid.plotarea(inward=ticks.in,grilled=grill,at=c(xticks,yticks),label=c(xlab,ylab),title=Plabel,gp=gp,vp=vp)
       } else {
         if ("plotarea"%in%class(GROB)) {
           border <- GROB
@@ -213,10 +213,11 @@ figure.back<- function(width=640,height=480,cells=10){
       ypos <- brd$vp[["layout.pos.row"]]
       scX <- brd$vp[["xscale"]]
       scY <- brd$vp[["yscale"]]
+      gp1 <- brd$gp
       panel.labels <- serialize(brd$label,connection=NULL,ascii=TRUE)
-      dump("panel.labels",file=FileSel,append=TRUE)
+      dump(c("gp1","panel.labels"),file=FileSel,append=TRUE)
       cat("brd.lab<-unserialize(connection=panel.labels)",file=FileSel,fill=TRUE,append=TRUE)
-      cat(paste("XPANEL<-current.Figure$panel(x=c(",paste(xpos,collapse=","),"),y=c(",paste(ypos,collapse=","),"),scale.X=c(",paste(scX,collapse=","),"),scale.Y=c(",paste(scY,collapse=","),"),Plabel=",deparse(brd$title,width.cutoff = 500),",xlab=brd.lab[1:2],ylab=brd.lab[3:4],xticks=c(",paste(deparse(brd$at[[1]],width.cutoff = 500),deparse(brd$at[[2]],width.cutoff = 500),sep=","),"),yticks=c(",paste(deparse(brd$at[[3]],width.cutoff=500),deparse(brd$at[[4]],width.cutoff = 500),sep=","),"),grill=",brd$grilled,",ticks.in=",brd$inward,",update.GUI=FALSE)",sep=""),file=FileSel,fill=TRUE,append=TRUE)
+      cat(paste("XPANEL<-current.Figure$panel(x=c(",paste(xpos,collapse=","),"),y=c(",paste(ypos,collapse=","),"),scale.X=c(",paste(scX,collapse=","),"),scale.Y=c(",paste(scY,collapse=","),"),Plabel=",deparse(brd$title,width.cutoff = 500),",xlab=brd.lab[1:2],ylab=brd.lab[3:4],xticks=c(",paste(deparse(brd$at[[1]],width.cutoff = 500),deparse(brd$at[[2]],width.cutoff = 500),sep=","),"),yticks=c(",paste(deparse(brd$at[[3]],width.cutoff=500),deparse(brd$at[[4]],width.cutoff = 500),sep=","),"),grill=",brd$grilled,",ticks.in=",brd$inward,"gp=gp1,update.GUI=FALSE)",sep=""),file=FileSel,fill=TRUE,append=TRUE)
       els <- x$elements
       lapply(els,function(pnt){
         z <- grid.get(pnt$name)
@@ -254,7 +255,9 @@ figure.back<- function(width=640,height=480,cells=10){
            PDFwrite=bitmap("RPlots.pdf",type="pdfwrite",width=11.69,height=8.62)
            )
     print.dev <- dev.cur()[[1]]
-    pushViewport(viewport(w=1,h=1,layout=grid.layout(nrow=cells,ncol=cells)))
+    v1<-viewport(w=1,h=1,layout=grid.layout(nrow=cells,ncol=cells),clip=T)
+    grid.rect(width=unit(1,"npc")+unit(0.5,"inches"),height=unit(1,"npc")+unit(0.5,"inches"),gp=gpar(col=ps.options()$bg,fill=ps.options()$bg))
+    pushViewport(v1)
     lapply(panels,function(z){
       dev.set(DevID)
       b <- grid.get(z$border$name)

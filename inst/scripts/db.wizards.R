@@ -84,7 +84,7 @@ lablog.find <- function(out=FALSE){
         dbGetQuery(mc,paste("insert into PARVALUES values(",vals,")",sep=""))
       }
     }
-    e<-wisard.out(grid.get(current.Figure$current.Panel$elements[[current.Figure$current.Panel$.Selected.Element]]$name),commit.to.db,var.names=list(),var.units=list())
+    e<-RGrace:::wisard.out(grid.get(current.Figure$current.Panel$elements[[current.Figure$current.Panel$.Selected.Element]]$name),commit.to.db,var.names=list(),var.units=list())
   }
   get.frame <- function(...){
     if (is.null(selectedGroup)){
@@ -112,7 +112,7 @@ lablog.find <- function(out=FALSE){
     }
     assign(paste(".",selectedSample,sep=""),g,envir=parent.env(environment()))
     on.close()
-    wisard.in(g,frame.name=selectedSample)
+    RGrace:::wisard.in(g,frame.name=selectedSample)
   }
   on.close <- function(...){
     dbDisconnect(mc)
