@@ -7,8 +7,14 @@
   .Kill.Structure<<-NULL
   gtkSetLocale()
   require(grid)
+  drawDetails.data<<-drawDetails.data.old
+  drawDetails.annotation<<-drawDetails.annotation.old
   if (R.version$major>=2){
     require(grDevices)
+    if (R.version$minor>=3){
+      drawDetails.data<<-drawDetails.data.new
+      drawDetails.annotation<<-drawDetails.annotation.new
+    }
   } else {
     require(graphics)
   }
@@ -435,6 +441,7 @@ ggplot <- function(...,panel=nearestPanel()) {
   
   on.saveas1.activate <- function(...){
     F1.w <<- gtkFileSelection("Save Figure")
+    F1.w$SetFilename(paste(getwd(),"/",sep=""))	
     F1.w$GetOkButton()$AddCallback("clicked",FS.ok.button2.clicked)
     F1.w$GetCancelButton()$AddCallback("clicked",FS.cancel.button2.clicked)
     F1.w$Show()
@@ -442,6 +449,7 @@ ggplot <- function(...,panel=nearestPanel()) {
 
   on.open1.activate <- function(...){
     F1.w <<- gtkFileSelection("Open Figure")
+    F1.w$SetFilename(paste(getwd(),"/",sep=""))
     F1.w$GetOkButton()$AddCallback("clicked",FO.ok.button1.clicked)
     F1.w$GetCancelButton()$AddCallback("clicked",FS.cancel.button2.clicked)
     F1.w$Show()
@@ -483,6 +491,7 @@ ggplot <- function(...,panel=nearestPanel()) {
 
     fig$set.active()
     F1.w <- gtkFileSelection("Write Data File",show=FALSE)
+    F1.w$SetFilename(paste(getwd(),"/",sep=""))
     F1.w$GetOkButton()$AddCallback("clicked",ok.button.clicked)
     F1.w$GetCancelButton()$AddCallback("clicked",function(...){ F1.w$Destroy()})
     F1.w$Show()
@@ -501,6 +510,7 @@ ggplot <- function(...,panel=nearestPanel()) {
 
     fig$set.active()
     F1.w <- gtkFileSelection("Open Data File",show=FALSE)
+    F1.w$SetFilename(paste(getwd(),"/",sep=""))
     F1.w$GetOkButton()$AddCallback("clicked",ok.button.clicked)
     F1.w$GetCancelButton()$AddCallback("clicked",function(...){ F1.w$Destroy()})
     F1.w$Show()

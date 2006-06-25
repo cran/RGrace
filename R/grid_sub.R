@@ -4,10 +4,10 @@ validGrobDetails.border <- function(x){
 
 drawDetails.border <- function(x, recording) {
 #if (!is.null(x$vp)){
-  .Call.graphics("L_segments",unit(0,"npc"),unit(0,"npc"),unit(0,"npc"),unit(1,"npc"),PACKAGE="grid")
-  .Call.graphics("L_segments",unit(1,"npc"),unit(0,"npc"),unit(1,"npc"),unit(1,"npc"),PACKAGE="grid")
-  .Call.graphics("L_segments",unit(0,"npc"),unit(0,"npc"),unit(1,"npc"),unit(0,"npc"),PACKAGE="grid")
-  .Call.graphics("L_segments",unit(0,"npc"),unit(1,"npc"),unit(1,"npc"),unit(1,"npc"),PACKAGE="grid")
+  .Call.graphics("L_segments",unit(0,"npc"),unit(0,"npc"),unit(0,"npc"),unit(1,"npc"),NULL,PACKAGE="grid")
+  .Call.graphics("L_segments",unit(1,"npc"),unit(0,"npc"),unit(1,"npc"),unit(1,"npc"),NULL,PACKAGE="grid")
+  .Call.graphics("L_segments",unit(0,"npc"),unit(0,"npc"),unit(1,"npc"),unit(0,"npc"),NULL,PACKAGE="grid")
+  .Call.graphics("L_segments",unit(0,"npc"),unit(1,"npc"),unit(1,"npc"),unit(1,"npc"),NULL,PACKAGE="grid")
 #}
 }
 
@@ -35,7 +35,7 @@ validDetails.data <- function(x){
 }
 
 
-drawDetails.data <- function(x, recording) {
+drawDetails.data.old <- function(x, recording) {
   if (!is.null(x$vp)){
     .Call.graphics("L_lines", unit(x$x,"native"), unit(x$y,"native"),PACKAGE="grid")
     gp1 <- NULL
@@ -71,6 +71,44 @@ drawDetails.data <- function(x, recording) {
     }
 }
 }
+
+drawDetails.data.new <- function(x, recording) {
+  if (!is.null(x$vp)){
+    .Call.graphics("L_lines", unit(x$x,"native"), unit(x$y,"native"),list(as.integer(1:length(x$x))),NULL,PACKAGE="grid")
+    gp1 <- NULL
+    if (!is.null(x$gp)) {
+      gp1<-x$gp
+      gp1$lty<-1
+      grid:::set.gpar(gp1)
+    }
+
+    if (!is.null(x$h)){
+      z1 <- unit(x$y+x$h/2,"native")
+      z2 <- unit(x$y-x$h/2,"native")
+      h1 <- unit(x$x,"native")+unit(as.numeric(x$size)/2,"char")
+      h2 <- unit(x$x,"native")-unit(as.numeric(x$size)/2,"char")
+      .Call.graphics("L_segments",unit(x$x,"native"),z1,unit(x$x,"native"),z2,PACKAGE="grid")
+      .Call.graphics("L_segments",h1,z1,h2,z1,PACKAGE="grid")
+      .Call.graphics("L_segments",h1,z2,h2,z2,PACKAGE="grid")
+    }
+    if (!is.null(x$w)){
+      z1 <- unit(x$x+x$w/2,"native")
+      z2 <- unit(x$x-x$w/2,"native")
+      h1 <- unit(x$y,"native")+unit(as.numeric(x$size)/2,"char")
+      h2 <- unit(x$y,"native")-unit(as.numeric(x$size)/2,"char")
+      .Call.graphics("L_segments",z1,unit(x$y,"native"),z2,unit(x$y,"native"),PACKAGE="grid")
+      .Call.graphics("L_segments",z1,h1,z1,h2,PACKAGE="grid")
+      .Call.graphics("L_segments",z2,h1,z2,h2,PACKAGE="grid")
+    }
+    if (x$pch<26){
+      .Call.graphics("L_points", unit(x$x,"native"), unit(x$y,"native"), x$pch, unit(x$size,"char"),PACKAGE="grid")
+    }
+    if (!is.null(gp1)) {
+      grid:::set.gpar(x$gp)
+    }
+}
+}
+
 
 grid.data <- function(x=c(0, 1),y=c(0, 1), w=NULL, h=NULL, pch=as.integer(26), size=unit(1, "char"), gp=gpar(col="black",fill="white",lty=1,lwd=1), title="", draw=TRUE, vp=NULL) {
   cl <- "data"

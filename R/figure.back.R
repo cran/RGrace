@@ -217,7 +217,7 @@ figure.back<- function(width=640,height=480,cells=10){
       panel.labels <- serialize(brd$label,connection=NULL,ascii=TRUE)
       dump(c("gp1","panel.labels"),file=FileSel,append=TRUE)
       cat("brd.lab<-unserialize(connection=panel.labels)",file=FileSel,fill=TRUE,append=TRUE)
-      cat(paste("XPANEL<-current.Figure$panel(x=c(",paste(xpos,collapse=","),"),y=c(",paste(ypos,collapse=","),"),scale.X=c(",paste(scX,collapse=","),"),scale.Y=c(",paste(scY,collapse=","),"),Plabel=",deparse(brd$title,width.cutoff = 500),",xlab=brd.lab[1:2],ylab=brd.lab[3:4],xticks=c(",paste(deparse(brd$at[[1]],width.cutoff = 500),deparse(brd$at[[2]],width.cutoff = 500),sep=","),"),yticks=c(",paste(deparse(brd$at[[3]],width.cutoff=500),deparse(brd$at[[4]],width.cutoff = 500),sep=","),"),grill=",brd$grilled,",ticks.in=",brd$inward,"gp=gp1,update.GUI=FALSE)",sep=""),file=FileSel,fill=TRUE,append=TRUE)
+      cat(paste("XPANEL<-current.Figure$panel(x=c(",paste(xpos,collapse=","),"),y=c(",paste(ypos,collapse=","),"),scale.X=c(",paste(scX,collapse=","),"),scale.Y=c(",paste(scY,collapse=","),"),Plabel=",deparse(brd$title,width.cutoff = 500),",xlab=brd.lab[1:2],ylab=brd.lab[3:4],xticks=c(",paste(deparse(brd$at[[1]],width.cutoff = 500),deparse(brd$at[[2]],width.cutoff = 500),sep=","),"),yticks=c(",paste(deparse(brd$at[[3]],width.cutoff=500),deparse(brd$at[[4]],width.cutoff = 500),sep=","),"),grill=",brd$grilled,",ticks.in=",brd$inward,",gp=gp1,update.GUI=FALSE)",sep=""),file=FileSel,fill=TRUE,append=TRUE)
       els <- x$elements
       lapply(els,function(pnt){
         z <- grid.get(pnt$name)

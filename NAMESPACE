@@ -39,10 +39,8 @@ export(
 "BULLET"
 )
 
-S3method("drawDetails", "annotation")
 S3method("preDrawDetails","annotation")
 S3method("postDrawDetails","annotation")
-S3method("drawDetails", "data")
 S3method("validDetails", "data")
 S3method("editDetails", "plotarea")
 S3method("print","panel")

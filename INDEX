@@ -1,6 +1,7 @@
-annotation              Text annotation
 BULLET                  Dataline's representation in the textual
                         annotation.
+RGrace-GUI              RGrace main window GUI
+annotation              Text annotation
 element                 Data line
 figure                  Plotting window.
 ggplot                  Front end to RGrace plotting routines.
@@ -10,4 +11,3 @@ grid.plotarea           Plot's frame.
 hooks                   User-defined Hooks.
 log10.ticks             "Logarithmic" tick marks.
 panel                   Axes and its elements
-RGrace-GUI              RGrace main window GUI
