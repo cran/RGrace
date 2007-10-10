@@ -1,8 +1,36 @@
+0.6.4-0.6.5
+	* Passed R CMD check ... 
+	* Documentation updates
+	* Fix errors in save script caused by changes in serialize function
+	* gtkDevice2 is dropped from the mainstream trunk into scripts directory as separate figure frontend (.GTK2.interface.gdk)
+	* RGorace is renamed back to RGrace and is ready to substitute old GTK1.2 RGrace on CRAN.
+	* DB interface cleanup
+0.6.3-0.6.4
+	* TODO: embed font into "printed" output. It can be done with pfb fonts and the command pfbtops from groof package. The output has to be pasted somewhere in the beggining of ps-file. The only thing to do is to parse PS file in search of required font resources, find their glyph store files, convert them with pfbtops and paste it back into ps file.
+	* Dropped dependence on gtkDevice2. It is still can be used if it is installed of course with command 'figure(ge="gdk")' but the library in this case will be loded dynamically.
+	* Replaced old good FileSave/Open dialogs with those ugly FileChoosers but cann't stand them more than 15 minutes. So I rolled back.
+	* New database schema and db.wisard interface upgrade
+	* Upgrade to R-2.5 and RGtk2-2.11 (and to gtk+-2.10 system library too). Now RGtk works without patches although cairoDevice still requires special math symbols patch and crashes (sometimes) on long polylines.
+0.6.2-0.6.3
+	* Being bitterly bitten when I did "Open file" instead of "Download from file..." the figure now not cleared when figure file is opened. Instead the command which clears the current figure is put into the saved figure script. 
+	* There are some support of other grid objects. If they are drawn on the NULL viewport, they are saved and printed with the figure. There is a bug here because the display list is broken and all non RGorace-graphic is drawn as background objects. It can be fixed but requires some refactoring of RGorace.
+0.6.2
+	* Old GtkCombos are replaced by new GTK2 GtkComboBoxEntries.
+	* One more control added. Error Representation (errstyle argument to element and ggplot) selects the style the error bars are drawn.
+	Available options are - standard whiskers, as filled area or arrows.
+	* figure now has one more optional argument ge (graphic engine). Default is "cairo". Otherwise old gtkDevice is used instead of new cairoDevice.
+          This is done because of buggy cairo implementation (not the fault of cairoDevice) which cause a crash when curve with 20000+ nodes is drawn on cairoDevice.
+0.6.1
+	* Port complete 
+0.6.0
+	* RGorace with new RGtk2 interface and cairo device (thanks Michael Lawrence). Not everything is ported yet but it quite workable as is.
+	* RGorace now has no C-code inserts. So it is pure R-script now,
+(RGrace is dead now. All changes from now on will be made to RGorace - GTK2 port of RGrace)
 0.5.4-0.5.5
 	* Some fixes to make it work with new version of grid (R-2.3.1). Hopefully compatibility with older versions is not broken.
 0.5.3-0.5.4
 	* Add missed comma in Save figure procedure
-	* FileSelection dialogs are opened now in current working directory.
+	* FileSelection dialogs now operate in current working directory.
 0.5.2-0.5.3
 	* Some bug-fixes (in database interface).
 	* Better calculation of axis tags positions
@@ -49,12 +77,14 @@
 0.4.1-0.4.3
 	* Added a submenu to the Plot menu which selects a backend for printing - png(),pdf(),postscript() and bitmap(device="pdfwrite"). The last has sense if you have ghostscript installed.
 	* The BULLET command draws a "dead miner" icon in legend box when panel or element referred to by BULLET's arguments can not be found. 
+0.4.1-0.4.2
+	* Synchronize changes made in RGrace with Gtk2.0 port (called RGorace now). 
 0.4.0-0.4.1
 	* Fixed quite a number of bugs which has creeped in while I were busy making RGrace work under new version of grid.
 	* Dropped dependence on RGtkGlade. Although I hate doing this (Glade is a right thing - may be the best in Gtk toolkit), but in modern Linux distributions only glade libraries for Gtk2.0 are put in.
-	* Interface redesign. Dropped option menus on notebook and replaced them with combos. Graph Interaction radio-menu was converted into option menu, partly because I could not find RGtk routines for handling radio-menus, partly because I like to have before my eyes what kind of interaction context I am now in.
+	* Interface redesign. Dropped option menues on notebook and replaced them with combos. Graph Interaction radio-menu was converted into option menu, partly because I could not find in  RGtk routines for handling radio-menus, partly because I like to have before my eyes what kind of interaction context I am now in.
 	* RGrace now handles all types of symbol shapes (0-26, not 21-26 as before).   
-	* Run R CMD check and try to suppress all objections it has raised on RGrace documentation.
+	* Run R CMD check and try to supress all objections it has raised on RGrace documentation.
 	* Put an example into ggplot.Rd. 
 0.3.5-0.4.0
 	* Deprecated GtkText replaced with new GtkTextView widget. So glade file can be now viewed in the Glade2.
@@ -67,7 +97,7 @@
 0.3.2-0.3.3
         * Fixes of bugs due to name conflict with on.select.element hook
         * Documentation upgrade.
-        * One more hook introduced - figure.startup(). It is called once when a new figure is opened, and is a right place where to put your code if you want to customize figure's interface, adding menus to launch your own functions. 
+        * One more hook introduced - figure.sturtup(). It is called once when a new figure is opened, and is a right place where to put your code if you want to customize figure's interface, adding menues to launch your own functions. 
 0.3.0-0.3.1
 	* 4 grid.scales are combined into one grid's grob (grid.plotarea). As grid.scales are no longer needed they are removed.
 	* Structure of RGrace save file has changed. All grobs in figure are simply dumped into the save file. Output is much longer but if the figure's grobs are tweaked through the command line the tweaks can be saved and restored.    
@@ -80,7 +110,7 @@
 	* Documentation upgrade.
 	* Fixed a bug with axes legend which is got lost after copy/pasting.
 	* Wish-list
-	           * Switch to GTK2. It is not stable now (and I do not hear what bindings for R are planned), but GTK2 has its strong features (support for frame-buffer devices, for example). It also gets harder to support GTK1.2 applications in newer Linux distributions.
+	           * Switch to GTK2. It is not stable now (and I do not hear what bindings for R are planned), but GTK2 has its strong features (support for frame-buffer devices, for example). It also gots harder to support GTK1.2 applications in newer Linux distributions.
 		   * Switch to grid-2.0 (planned for 2.0 release of R).
 0.2.3-0.2.4
 	* Legend-like annotations are complete. Use a command BULLET(panel=n,element=m) (no quotes!) in a Annotation text field to have a small icon representing an m'th element in n'th panel in the selected annotation (the next string or expression line in Annotation text box will be a description of this icon). More documentation will follow.
@@ -92,11 +122,11 @@
 	* Description field is gone from the Elements notebook leaf.
 	* Edit menu. User can copy and paste elements and panels from/to internal paste buffer in an R - session. 
 0.2.1-0.2.2
-	* Add cross-hairs marking selected region. This has required some C-coding so Disgrace now is not written totally in R ;( Compiler flags (gtk-1.2, gdk-1.2, glib-1.2 includes and libs) are collected in Makevars file so if you will have problems compiling Disgrace look into this file and substitute values relevant to your system.
+	* Add crosshairs marking selected region. This has required some C-coding so Disgrace now is not written totally in R ;( Compiler flags (gtk-1.2, gdk-1.2, glib-1.2 includes and libs) are collected in Makevars file so if you will have problems compiling Disgrace look into this file and substitute values relevant to your system.
 0.2.0-0.2.1
 	* Fix a bug with printing when deleted panels shows up as a frame around figure in postscript file.
 0.1.9-0.2.0
-	* Start writing .Rd documentation
+	* Starts writing .Rd documentation
 	* Fixed bug with data lines redrawing twice after editing or zooming
 	* Two new callback handlers are written - move.indexed (suitable for on.select.data - moves selected point on data line to point where mouse button has been released) and spline.data (suitable for on.select.points - draws a smoothed spline through points user has selected)
 	* Some code cleanups in printing and saving procedures.
@@ -109,7 +139,7 @@
 0.1.7-0.1.8
 	* GUI rearrangement. Add color, fontface and fontsize selection to annotations and 2 buttons to apply font face and size  to all annotations in current panel and figure.
 	* Default hooks are changed. Now on.select.region/points/element report their parameters to global environment as .HANDLE,.INDEX,.REG,.DATA matrices.
-	* Add zoom and point stack. Clicking Esc after zooming restores previous state until stack is empty. Points stack holds coordinates of all previously selected points.
+	* Add zoom and point stack. Clicking Esc after zooming restore previous state until stack is empty. Points stack holds coordinates of all previously selected points.
 	Hitting Esc deletes the last one, hitting Enter resets points stack to NULL. on.select.points called in these cases too.    
 	* data parameter to on.select.points is a matrix with coordinates of points selected so far (ie points stack).
 	* ggplot() and element() have 2 new parameters w and h (width and height). They are used to draw error bars (vertical and horizontal).
@@ -121,10 +151,10 @@
 		x Make some sort of rubberboxes appearing when region selection is in progress (without redrawing of panels - this is the most hard part).   
 0.1.6-0.1.7
 	* All hooks now take 4 parameters (some of them may be NULL) on.select.xxx(region,handle,index,data)
-	* All hooks are called when mouse button are released - region parameter is a region between press and release points.
+	* All hooks are called when mouse button are realeased - region parameter is a region between press and release points.
 	* Graph interaction type is now figure-wide (not global)
 	* Fix bug with axis flipping after zooming.
-	* Blank functions are inserted as default hooks (it keeps R away from complaining about on.select.xxx not found)
+	* Blank function are inserted as default hooks (it keeps R away from complaining about on.select.xxx not found)
 	* Annotation's dragging handling is transferred into default "on.select.annotation" hook. If you do not like draggable text set this hook to NULL.
 0.1.5-0.1.6
 	* Method "annotation()" added to panel structure (works practically the same as element())
@@ -136,11 +166,11 @@
 	* As Jeff Gentry pointed out I have misprinted RGtkGlade name through out documentation. Fixed.
 0.1.3-0.1.4
 	* After long meditation grid.data is now splitted on 2 sub-grobs - grid.points and grid.lines. grid.points are now always drawn with lty=1. It fixes bug with curves disappearing when lty set to 0 (no line) with symbol=triangle,diamond.
-	* "Quit" menu and figure "delete-event" share the common callback.
+	* "Quit" menu and figure "delete-event" share the common calback.
 0.1.2-0.1.3
 	* "Rotation" spinbox for annotations is now functional
 	* Missed callbacks for "Save" and "Quit" menus are inserted
-	* if current.Figure has been closed the current.Figure variable is set to NULL. So ggplot() after that works correctly - opens new figure.
+	* if current.Figure closed current.Figure set to NULL. So ggplot() after that works correctly - opens new figure.
 0.1.1-0.1.2
 	* bug fix - text annotations now are draggable by mouse
 	* small code rewrite - grob properties of object foo are now set at once - grid.edit(foo,grid.prop.list(prop1=val1,prop2=val2,..),redraw=T)

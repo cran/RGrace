@@ -31,7 +31,7 @@ lf.in.range <- function(reg,handle,index,datainreg){
   ggplot(x=x,y=cbind(x,1)%*%lf$coefficients,Elabel=paste(c("Ax+B: A=","B="),lf$coefficients,collapse=" ",sep=""),gp=gpar(col="blue"),rescale=F)
 }
 
-sort.data <- function(reg,handle,index,data){
+xsort.curve <- function(reg,handle,index,data){
    l <- sort(data[,1],index.return=TRUE)   
    grid.edit(handle$name,x=data[l$ix,1],y=data[l$ix,2],redraw=TRUE)
 }
@@ -85,24 +85,24 @@ simple.calculus <- function(reg,handle,index,data){
   w$Add(v <- gtkVBox(FALSE,6))
   
   v$Add(h <- gtkHBox(FALSE,2))
-  v$SetChildPacking(h,FALSE,FALSE,0)
+  v$SetChildPacking(h,FALSE,FALSE,0,0)
   h$Add(gtkLabel("X'<-f(X,Y)"))
   h$Add(new.x.w <- gtkEntry(10))
   new.x.w$SetText("X")
 
   v$Add(h <- gtkHBox(FALSE,2))
-  v$SetChildPacking(h,FALSE,FALSE,0)
+  v$SetChildPacking(h,FALSE,FALSE,0,0)
   h$Add(gtkLabel("Y'<-f(X,Y)"))
   h$Add(new.y.w <- gtkEntry(10))
   new.y.w$SetText("Y")
 
   v$Add(h <- gtkHBox(TRUE,1))
-  v$SetChildPacking(h,FALSE,FALSE,0)
+  v$SetChildPacking(h,FALSE,FALSE,0,0)
   h$Add(arng.w <- gtkCheckButton("Autorange?"))  
   arng.w$SetActive(TRUE)
   
   v$Add(h <- gtkHBox(TRUE,3))
-  v$SetChildPacking(h,FALSE,FALSE,0)
+  v$SetChildPacking(h,FALSE,FALSE,0,0)
   h$Add(apply.w <- gtkButton("Apply"))
   h$Add(rback.w <- gtkButton("Rollback"))
   h$Add(cancel.w <- gtkButton("Close"))
@@ -128,13 +128,13 @@ move.indexed.y <- function(reg,handle,index,data){
   grid.edit(handle$name,y=yd,redraw=TRUE)
 }
 
-smooth.data <- function(reg,handle,index,data){
+smooth.curve <- function(reg,handle,index,data){
   library(stats)
   ksmooth(x=data[,1],y=data[,2],kernel="normal",bandwidth=3)->z
   ggplot(x=z$x,y=z$y,Elabel=paste(handle$title,"smoothed"),gp=gpar(col="blue"),rescale=FALSE)
 }
   
-spline.data <- function(reg,handle,index,data){
+spline.curve <- function(reg,handle,index,data){
   library(stats)
   if(dim(data)[[1]]>4){
     z <- smooth.spline(x=data[,1],y=data[,2],spar=0.6,all.knots=T)
@@ -166,6 +166,5 @@ default.hooks <- function(){
   on.select.element <<- default.hook
   on.select.region <<- default.hook
   on.select.points <<- default.hook
-  
 }
 

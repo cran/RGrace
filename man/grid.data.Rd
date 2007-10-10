@@ -7,8 +7,8 @@
 }
 \usage{
 grid.data(x=c(0, 1),y=c(0, 1), w=NULL, h=NULL, pch=as.integer(26),
-size=unit(1, "char"), gp=gpar(col="black",fill="white",lty=1,lwd=1),
-title="", draw=TRUE, vp=NULL)
+size=unit(1, "char"), errstyle = "whiskers", gp=gpar(col="black",
+fill="white", lty=1, lwd=1), title="", draw=TRUE, vp=NULL)
 }
 
 \arguments{
@@ -16,8 +16,9 @@ title="", draw=TRUE, vp=NULL)
     Numeric vectors - coordinates of data points.
   }
   \item{w,h}{
-    Numeric vectors or \code{NULL}s. If not \code{NULL} verticlal/horizontal error bars are also drawn
-    with length \code{w}/\code{h}.
+    Numeric vectors or \code{NULL}s. If not \code{NULL} they describe an
+    uncertainty in x,y data coordinates which is  represented on graphic
+    according to \code{errstyle} parameter.
   }  
   \item{pch}{
     Symbol's shape. RGrace handles only symbols in the range 20-26
@@ -30,6 +31,20 @@ title="", draw=TRUE, vp=NULL)
     \code{\link[grid]{gpar}}, \code{\link[grid]{grid.points}},
     \code{\link[grid]{grid.lines}}, \code{\link[grid]{viewport}}. 
   }
+  \item{errstyle}{
+    How data errors \code{w},\code{h} are represented on plot.
+    Acceptable values:
+    \begin{description}
+    \item[\code{whiskers}] (the default). Errorbars with equal lengths in
+    both directions.
+    \item[\code{areafill}] Area is filled between the data curve and curve
+    shifted by \code{c(w,h)} vector. There is special case. If both
+    \code{w}, \code{h} are \code{NULL}s then area between data curve and
+    x-axis is filled.
+    \item[\code{arrows}] The arrows is drawn from the nodes ofdata curve
+    in the direction of the vector \code{c(w,h)}. 
+    \end{description}
+    }
   \item{title}{
     Character string used for the data identification. Something
     like a comment string stored with the grob.  	

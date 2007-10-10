@@ -38,7 +38,9 @@
 
     \item["Delete" button] - delete the current panel from figure.
 
-    \item["Autorange" button] - rescales current panel so all elements in it will be shown.
+    \item["Autorange" button] - rescales current panel so all elements
+    in it will be shown.
+    
     \item[Unnamed combo box] - list of panels in this
     figure. Selecting entry in it made selected panel current. Also
     updates GUI controls with the values of panel's properties.
@@ -77,19 +79,33 @@
 	Here you can select and edit properties of elements (data lines) located in the panel you have selected beforehand on "Panels" page.
 	\begin{description}
 	\item["Apply" button] - changes you have made in GUI controls are submitted only after this button is pressed.
+
 	\item["Delete" button] - delete the selected element.
+
 	\item[Unnamed combo box] - list of elements in the current panel. Selecting entry in it updates GUI controls with element's properties values.
+
 	\item["Symbol:..." combo box] - symbol to be drawn at data line's nodes.
+
 	\item["Line:..." combo box] - type of line to be draw between data line's nodes.
+
 	\item["Symbol size" spin box] - size of symbol in "chars" unit (see grid documentation).
+
 	\item["Line width" spin box] - width of line in points. Zero means to use default line width (lwd field is not set inside gpar structure)
+
 	\item["Outline color" combo box] - line's color ("default" - means what col field is not set in gpar structure).
+
 	\item["Fill color" combo box] - the color data points are filled with ("default" - means what fill field is not set in gpar structure).
+
 	\item["Data" frame] - simple editor which allows to edit 
 	values of data line's points. "Index" spin-box selects index of
 	data point to edit. Coordinates/error bars lengths of selected data point are
 	displayed in  "X","Y","W" and "H" entries and there new values
 	for this point can be entered.
+
+	\item["Error Representation" combo box] - how \code{w},\code{h}
+	parameters are drawn on graphic. Possible choices are: as error
+	bars ("whiskers"), colored area ("areafill") or arrows.
+
 	\item["Apply Color/Symbol Values to" combo box] - if individual
 	points of selected data line have different fill
 	color, symbol size and symbol type
@@ -114,30 +130,41 @@
 	already existing one. If the color/symbol values are the same
 	along the curve then
 	effect of selection made in this
-	combo box is just the same. 
+	combo box is just the same.
 	\end{description}
-\item[Annotations]
+
+	\item[Annotations]
 Here you can select and edit properties of text annotations located in
 the panel you have selected beforehand on "Panels" page.
 
 \begin{description}
 
+
 \item["Apply" button] - changes you have made in GUI controls are submitted only after this button is pressed.
+
 \item["Delete" button] - delete the selected annotation.
+
 \item["Place new" button] - clicking this button and after that clicking left mouse button in plotting area will place new text annotations in mouse cursor position inside current panel with properties you have specified in GUI controls.
+
 \item[Text widget] - annotation's text. Each line can either be a plain string (class character) or mathematical expression (class expression). The same rules regarding quoting/expression() as for axis title apply. There is also one exception: you can use command \code{\link{BULLET}(panel=n,element=m)} (with no quotes) to have a graphical representation of m'th element from the n'th panel in the selected annotation. Note that this representation is persistent and does not track changes that you have made to data line. So after editing data line  you have to re-Apply changes to the annotation containing \code{\link{BULLET}} comand representing this data line.
+
 \item["Color" combobox] - foreground color of text("default" - means what col field is not set in gpar structure) .
+
 \item["Text Style" frame] - select here font size (in points) and style (bold,italic...) for the text annotation. "Apply to panel" and "Apply to figure" buttons set all annotations and axis titles to this style and size. Zero text size and "default" text style means what fontsize and fontstyle fields are not set in gpar structure. Note, please, that the selected style is not applied to expressions (math text) - in that case you have to explicitly specify style inside expression() command.
+
 \item["Rotation" spinbox] - rotates selected annotation counterclockwise.
+
 \item["Framed?" check-box] - adds a 2-point frame around annotation.
 \end{description}
 \end{description}
 
 At the top of slide panel there is a short menu bar with two items:
 \begin{description}
+
 \item["File" menu.]
 Almost standard.
 \begin{description}
+
 \item["Save as","Save","Open" menu-items] - allow you to save figure in
   file and to open it later for further editing. It saves figure as
   \R-script which can be edited by your favorite text editor if something
@@ -148,6 +175,7 @@ Almost standard.
   although the figure file itself is a text file, some objects are
   dumped into it with \code{serialize()} call, so manually editing them
   may prove to be not so easy.
+
   \item["Download from File" menu item] - read ascii data tables and
   plot them on the figure. After clicking it the user presented with
   standard File selection dialog and after selecting appropriate file
@@ -184,7 +212,8 @@ Almost standard.
   
  \item["Upload to File" menu item] - puts the selected data line to the
  ascii file as a text table.
-  \item["Print" menu] - hardcopies the figure into file ("RPlots.*" in
+
+ \item["Print" menu] - hardcopies the figure into file ("RPlots.*" in
   the current directory, extension depends on the selected print
   driver). The available choice of print drivers is "PS","PDF","PNG"
   with backends \code{\link{postscript}}, \code{\link{pdf}} and \code{\link{png}}; and
@@ -193,15 +222,18 @@ Almost standard.
   being present in your system (this is just a shortcut for calling
   \code{postscript(...)} function and massaging the resulting ps file with
   ps2pdf ghostscript utility).
+
   \item["Quit" menu item] - close this figure. If it is also the
   \code{current.Figure}, then \code{current.Figure} variable is \code{NULL}-ed.
   \end{description}
+
   \item["Edit" menu.]
   Operations with internal copy/paste buffer (it has nothing to do with
   X-selection mechanism). You can copy selected panel or element ("Copy
   panel", "Copy element" menu items) into this buffer and paste ("Paste"
   menu item) selected structure into the figure/panel in the same
   \R-session.
+
   \item["Hooks" menu (optional)] - this menu is created in
   \code{\link{figure.startup}} script, so it is visible only if
   \code{\link{figure.startup}} is redefined with \code{hooks.user.menu} in

@@ -3,12 +3,12 @@ validGrobDetails.border <- function(x){
 }
 
 drawDetails.border <- function(x, recording) {
-#if (!is.null(x$vp)){
+if (!is.null(x$vp)){
   .Call.graphics("L_segments",unit(0,"npc"),unit(0,"npc"),unit(0,"npc"),unit(1,"npc"),NULL,PACKAGE="grid")
   .Call.graphics("L_segments",unit(1,"npc"),unit(0,"npc"),unit(1,"npc"),unit(1,"npc"),NULL,PACKAGE="grid")
   .Call.graphics("L_segments",unit(0,"npc"),unit(0,"npc"),unit(1,"npc"),unit(0,"npc"),NULL,PACKAGE="grid")
   .Call.graphics("L_segments",unit(0,"npc"),unit(1,"npc"),unit(1,"npc"),unit(1,"npc"),NULL,PACKAGE="grid")
-#}
+}
 }
 
 grid.border <- function(gp=gpar(),name=NULL,draw=TRUE, vp=NULL) {
@@ -16,7 +16,7 @@ grid.border <- function(gp=gpar(),name=NULL,draw=TRUE, vp=NULL) {
   cl <- "border"
   z <- grob(gp=gp, cl=cl, vp=vp,name=name)
   if (draw) {
-	grid.draw(z)
+        grid.draw(z)
   }
   z
 }
@@ -35,84 +35,93 @@ validDetails.data <- function(x){
 }
 
 
-drawDetails.data.old <- function(x, recording) {
+drawDetails.data<- function(x, recording) {
   if (!is.null(x$vp)){
-    .Call.graphics("L_lines", unit(x$x,"native"), unit(x$y,"native"),PACKAGE="grid")
     gp1 <- NULL
-    if (!is.null(x$gp)) {
-      gp1<-x$gp
-      gp1$lty<-1
-      grid:::set.gpar(gp1)
-    }
-
-    if (!is.null(x$h)){
-      z1 <- unit(x$y+x$h/2,"native")
-      z2 <- unit(x$y-x$h/2,"native")
-      h1 <- unit(x$x,"native")+unit(as.numeric(x$size)/2,"char")
-      h2 <- unit(x$x,"native")-unit(as.numeric(x$size)/2,"char")
-      .Call.graphics("L_segments",unit(x$x,"native"),z1,unit(x$x,"native"),z2,PACKAGE="grid")
-      .Call.graphics("L_segments",h1,z1,h2,z1,PACKAGE="grid")
-      .Call.graphics("L_segments",h1,z2,h2,z2,PACKAGE="grid")
-    }
-    if (!is.null(x$w)){
-      z1 <- unit(x$x+x$w/2,"native")
-      z2 <- unit(x$x-x$w/2,"native")
-      h1 <- unit(x$y,"native")+unit(as.numeric(x$size)/2,"char")
-      h2 <- unit(x$y,"native")-unit(as.numeric(x$size)/2,"char")
-      .Call.graphics("L_segments",z1,unit(x$y,"native"),z2,unit(x$y,"native"),PACKAGE="grid")
-      .Call.graphics("L_segments",z1,h1,z1,h2,PACKAGE="grid")
-      .Call.graphics("L_segments",z2,h1,z2,h2,PACKAGE="grid")
-    }
-    if (x$pch<26){
+    switch(x$errstyle,
+           whiskers={
+             .draw.grid.lines(unit(x$x,"native"), unit(x$y,"native"))
+             if (!is.null(x$gp)) {
+               gp1<-x$gp
+               gp1$lty<-1
+               grid:::set.gpar(gp1)
+             }
+             if (!is.null(x$h)){
+               z1 <- unit(x$y+x$h,"native")
+               z2 <- unit(x$y-x$h,"native")
+               h1 <- unit(x$x,"native")+unit(as.numeric(x$size)/2,"char")
+               h2 <- unit(x$x,"native")-unit(as.numeric(x$size)/2,"char")
+               .draw.grid.segments(unit(x$x,"native"),z1,unit(x$x,"native"),z2)
+               .draw.grid.segments(h1,z1,h2,z1)
+               .draw.grid.segments(h1,z2,h2,z2)
+             }
+             if (!is.null(x$w)){
+               z1 <- unit(x$x+x$w,"native")
+               z2 <- unit(x$x-x$w,"native")
+               h1 <- unit(x$y,"native")+unit(as.numeric(x$size)/2,"char")
+               h2 <- unit(x$y,"native")-unit(as.numeric(x$size)/2,"char")
+               .draw.grid.segments(z1,unit(x$y,"native"),z2,unit(x$y,"native"))
+               .draw.grid.segments(z1,h1,z1,h2)
+               .draw.grid.segments(z2,h1,z2,h2)
+             }
+           },
+           areafill={
+             if (is.null(x$h)&is.null(x$w)){
+               z1 <- c(x$x[length(x$x)],x$x[1])
+               z2 <- c(x$vp$yscale[1],x$vp$yscale[1])
+             } else{
+               if (!is.null(x$h)){
+                 z1 <- unit(x$y+x$h,"native")
+               } else {
+                 z1 <- unit(x$y,"native")
+               }                
+               if (!is.null(x$w)){
+                 z2 <- unit(x$x+x$w,"native")
+               } else {
+                 z2 <- unit(x$x,"native")
+               }
+               
+             }
+             .Call.graphics("L_polygon", unit(c(x$x,z2[length(z2):1]),"native"), unit(c(x$y,z1[length(z1):1]),"native"), list(as.integer(1:(length(z2)+length(x$x)))),PACKAGE="grid")
+           },
+           arrows={
+             .draw.grid.lines(unit(x$x,"native"), unit(x$y,"native"))
+             if (!is.null(x$h)&!is.null(x$h)){
+               gp1 <- NULL
+               if (!is.null(x$gp)) {
+                 gp1<-x$gp
+                 gp1$lty<-1
+                 grid:::set.gpar(gp1)
+               }
+               if (!is.null(x$h)){
+                 z1 <- unit(x$y+x$h,"native")
+               } else {
+                 z1 <- unit(x$y,"native")
+               }                
+               if (!is.null(x$w)){
+                 z2 <- unit(x$x+x$w,"native")
+               } else {
+                 z2 <- unit(x$x,"native")
+               }               
+               .Call.graphics("L_segments", unit(x$x,"native"), unit(x$y,"native"), z2, z1, arrow(10,unit(x$size,"char"),"last","closed"),PACKAGE="grid")
+             }
+           },
+           ellipses={print(x$errstyle)}
+           )
+    if (x$pch<26) {
       .Call.graphics("L_points", unit(x$x,"native"), unit(x$y,"native"), x$pch, unit(x$size,"char"),PACKAGE="grid")
     }
     if (!is.null(gp1)) {
       grid:::set.gpar(x$gp)
     }
-}
-}
 
-drawDetails.data.new <- function(x, recording) {
-  if (!is.null(x$vp)){
-    .Call.graphics("L_lines", unit(x$x,"native"), unit(x$y,"native"),list(as.integer(1:length(x$x))),NULL,PACKAGE="grid")
-    gp1 <- NULL
-    if (!is.null(x$gp)) {
-      gp1<-x$gp
-      gp1$lty<-1
-      grid:::set.gpar(gp1)
-    }
-
-    if (!is.null(x$h)){
-      z1 <- unit(x$y+x$h/2,"native")
-      z2 <- unit(x$y-x$h/2,"native")
-      h1 <- unit(x$x,"native")+unit(as.numeric(x$size)/2,"char")
-      h2 <- unit(x$x,"native")-unit(as.numeric(x$size)/2,"char")
-      .Call.graphics("L_segments",unit(x$x,"native"),z1,unit(x$x,"native"),z2,PACKAGE="grid")
-      .Call.graphics("L_segments",h1,z1,h2,z1,PACKAGE="grid")
-      .Call.graphics("L_segments",h1,z2,h2,z2,PACKAGE="grid")
-    }
-    if (!is.null(x$w)){
-      z1 <- unit(x$x+x$w/2,"native")
-      z2 <- unit(x$x-x$w/2,"native")
-      h1 <- unit(x$y,"native")+unit(as.numeric(x$size)/2,"char")
-      h2 <- unit(x$y,"native")-unit(as.numeric(x$size)/2,"char")
-      .Call.graphics("L_segments",z1,unit(x$y,"native"),z2,unit(x$y,"native"),PACKAGE="grid")
-      .Call.graphics("L_segments",z1,h1,z1,h2,PACKAGE="grid")
-      .Call.graphics("L_segments",z2,h1,z2,h2,PACKAGE="grid")
-    }
-    if (x$pch<26){
-      .Call.graphics("L_points", unit(x$x,"native"), unit(x$y,"native"), x$pch, unit(x$size,"char"),PACKAGE="grid")
-    }
-    if (!is.null(gp1)) {
-      grid:::set.gpar(x$gp)
-    }
-}
+  }
 }
 
 
-grid.data <- function(x=c(0, 1),y=c(0, 1), w=NULL, h=NULL, pch=as.integer(26), size=unit(1, "char"), gp=gpar(col="black",fill="white",lty=1,lwd=1), title="", draw=TRUE, vp=NULL) {
+grid.data <- function(x=c(0, 1),y=c(0, 1), w=NULL, h=NULL, pch=as.integer(26), size=unit(1, "char"), errstyle="whiskers", gp=gpar(col="black",fill="white",lty=1,lwd=1), title="", draw=TRUE, vp=NULL) {
   cl <- "data"
-  z <- grob(title=title, x=x, y=y, h=h, w=w, pch=as.integer(pch), size=size, cl=cl, gp=gp, vp=vp)
+  z <- grob(title=title, x=x, y=y, h=h, w=w, pch=as.integer(pch), size=size, errstyle=errstyle, cl=cl, gp=gp, vp=vp)
   if (draw){
       grid.draw(z)
   }
@@ -121,159 +130,10 @@ grid.data <- function(x=c(0, 1),y=c(0, 1), w=NULL, h=NULL, pch=as.integer(26), s
 
 
 
-################################################
-#Scale grob - tick marks, tick labels and title#
-################################################
+##################################################################
+#Plotarea grob - axis with tick marks, tick labels,titles + frame#
+##################################################################
 
-drawDetails.scale <- function(x,recording=TRUE) {
-# switch(x$type,
-#         l={
-#           .Call.graphics("L_segments",unit(0,"npc"),unit(0,"npc"),unit(0,"npc"),unit(1,"npc"))
-#         },
-#         r={
-#           .Call.graphics("L_segments",unit(1,"npc"),unit(0,"npc"),unit(1,"npc"),unit(1,"npc"))
-#         },
-#         b={
-#           .Call.graphics("L_segments",unit(0,"npc"),unit(0,"npc"),unit(1,"npc"),unit(0,"npc"))
-#         },
-#         t={
-#           .Call.graphics("L_segments",unit(0,"npc"),unit(1,"npc"),unit(1,"npc"),unit(1,"npc"))
-#         })
-#  grid.draw(x$children$ticks, recording=F)
-#  if (x$grilled) {
-#    grid.draw(x$children$setka,recording=FALSE)
-#    print(x$grilled)
-#  }
-##  grid.draw(x$children$tag,recording=F)
-#  if (!is.null(x$children$labels))
-#    grid.draw(x$children$labels, recording=FALSE)
-}
-
-editScaleProp <- function(x){
-  at.exp <- parse(text=x$at)
-  if (x$type%in%c("b","t")){
-    range <- x$vp$xscale
-  } else {
-    range <- x$vp$yscale
-  }
-  if (!is.null(range)) {
-    at.ticks <- formatC(eval(at.exp,list(RANGE=range,TICK.LAB="tick")))
-    if (is.null(at.ticks)) { at.ticks <- grid.pretty(range) }
-    at.labels <- eval(at.exp,list(RANGE=range,TICK.LAB="label"))
-    if (is.null(at.labels)) { at.labels <- lapply(gsub("e","~10^",formatC(grid.pretty(at.ticks))),function(x){parse(text=x)})}
-  } else {
-    at.ticks <- Inf
-    at.labels <- "Inf"
-  }
-  if (!x$inward){
-    dir <- 1
-    offset <- 0
-  } else {
-    dir <- -1
-    offset <- 0.5
-  }
-  at.ticks <- unit(at.ticks,"native")
-  switch(x$type,
-         b={            
-           tick.y0 <- unit(0, "npc")
-           tick.y1 <- unit(-.5*dir, "lines")
-           tick.x0 <- at.ticks
-           tick.x1 <- at.ticks
-           just <- "center"
-           rot <- 0
-           label.x <- at.ticks
-           label.y <- unit(-1+offset, "lines")            
-         },
-         t={
-           tick.y0 <- unit(1, "npc")
-           tick.y1 <- unit(1, "npc") + unit(.5*dir, "lines")
-           tick.x0 <- at.ticks
-           tick.x1 <- at.ticks
-           just <- "center"
-           rot <- 0
-           label.x <- at.ticks
-           label.y <- unit(1, "npc") + unit(1-offset, "lines")
-         },
-         l= {
-           tick.y0 <- at.ticks
-           tick.y1 <- at.ticks
-           tick.x0 <- unit(0, "npc")
-           tick.x1 <- unit(-.5*dir, "lines")
-           just <- "right"
-           rot <- 0
-           label.y <- at.ticks
-           label.x <- unit(-1+offset, "lines")
-         },
-         r={
-           tick.y0 <- at.ticks
-           tick.y1 <- at.ticks
-           tick.x0 <- unit(1, "npc")
-           tick.x1 <- unit(1, "npc") + unit(.5*dir, "lines")
-           just <- "left"
-           rot <- 0
-           label.y <- at.ticks
-           label.x <- unit(1, "npc") + unit(1-offset, "lines") 
-         }
-         )
-  x <- editGrob(x,x0=tick.x0,y0=tick.y0,x1=tick.x1,y1=tick.y1,vp=x$vp,gPath="ticks")
-  if (!x$grilled) {
-    x <- editGrob(x,x0=unit(Inf,"npc"),y0=unit(Inf,"npc"),x1=unit(Inf,"npc"),y1=unit(Inf,"npc"),vp=x$vp,gPath="setka")
-  } else {
-  if(x$type%in%c("t","b")){
-    x <- editGrob(x,x0=tick.x0,y0=unit(0,"npc"),x1=tick.x0,y1=unit(1,"npc"),vp=x$vp,gPath="setka")
-  } else {
-    x <- editGrob(x,x0=unit(0,"npc"),y0=tick.y0,x1=unit(1,"npc"),y1=tick.y0,vp=x$vp,gPath="setka")
-  }
-}
-  x <- editGrob(x,label=at.labels, x=label.x, y=label.y, just=just, rot=rot,vp=x$vp, gPath="labels")
-
-  x
-}
-
-validGrobDetails.scale <- function(x){
-  x
-}
-
-editDetails.scale <- function(x, specs) {
-  slot.names <- names(specs)
-  if (match("vp", slot.names, nomatch=0)|match("at", slot.names, nomatch=0)) {
-    x <- editScaleProp(x)
-    x <- editGrob(x,vp=x$vp,gPath="tag")
-  }
-  x
-}
-
-grid.scale <- function(at="", legend="", type="b", inward=FALSE, grilled=FALSE, gp=gpar(lwd=2,fontsize=12,fontface=1), draw=TRUE, vp=NULL) {
-  if (is.null(legend)){
-    switch(type,
-           b={legend="X Label"},
-           t={legend=""},
-           l={legend="Y Label"},
-           r={legend=""}
-         )
-  }
-  setka <- grid.segments(name="setka",gp=gpar(lty=2,lwd=1,col="grey"),vp=vp,draw=FALSE)
-  ticks <- grid.segments(name="ticks",gp=gp,draw=FALSE)
-  labels <- textGrob(name="labels",label="",check.overlap=TRUE)
-  switch(type,
-         l={
-           tag <- grid.text(name="tag",label=legend,x=unit(-3,"lines"),gp=gp,check.overlap=TRUE,rot=90,just=c("right","center"))
-         },
-         r={
-           tag <- grid.text(name="tag",label=legend,x=unit(3,"lines")+unit(1,"npc"),gp=gp,check.overlap=TRUE,rot=90,just=c("left","center"))
-         },
-         b={
-           tag <- textGrob(name="tag",label=legend,y=unit(-1.5,"lines"),gp=gp,rot=0,check.overlap=TRUE,just=c("center","top"))
-         },
-         t={
-           tag <- textGrob(name="tag",label=legend,y=unit(1.5,"lines")+unit(1,"npc"),gp=gp,check.overlap=TRUE,rot=0,just=c("center","bottom"))
-         })
-  
-  z <- gTree(at=at,name=NULL,grilled=grilled,inward=inward,  type=type,children=gList(setka, ticks, labels, tag), cl="scale", vp=vp ,gp=gp)
-  z <- editScaleProp(z)
-  grid.draw(z)
-  z
-}
 
 editTicks <- function(x){
   if (!x$inward){

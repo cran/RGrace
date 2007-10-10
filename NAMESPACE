@@ -1,12 +1,11 @@
-useDynLib("RGrace")
 
 #export general functions
 export(
 "ggplot",
 "figure",
-".z.interface",
 "figure.back",
-".GTK.interface"
+".z.interface",
+".GTK2.interface"
 )
 
 #export grid functions
@@ -20,11 +19,11 @@ export(
 "default.annotation",
 "delete.in.range",
 "lf.in.range",
-"sort.data",
+"xsort.curve",
 "move.indexed",
 "move.indexed.y",
-"smooth.data",
-"spline.data",
+"smooth.curve",
+"spline.curve",
 "spline.points",
 "simple.calculus"
 )
@@ -39,8 +38,13 @@ export(
 "BULLET"
 )
 
+#
+import("grid")
+#
+S3method("drawDetails", "annotation")
 S3method("preDrawDetails","annotation")
 S3method("postDrawDetails","annotation")
+S3method("drawDetails", "data")
 S3method("validDetails", "data")
 S3method("editDetails", "plotarea")
 S3method("print","panel")

@@ -1,7 +1,7 @@
 \name{figure}
 \alias{figure}
 \alias{figure.back}
-\alias{.GTK.interface}
+\alias{.GTK2.interface}
 \alias{.z.interface}
 \title{Plotting window.}
 \description{
@@ -14,7 +14,7 @@
 \usage{
 figure.back(width=640,height=480,cells=10)
 figure(width=400, height=400, cells=10)
-.GTK.interface(width=400,height=400,cells=10)
+.GTK2.interface(width=400,height=400,cells=10)
 .z.interface(width=1000,height=2000,cells=10)
 
 }

@@ -1,3 +1,29 @@
+if ((R.version$minor>0.1)&(R.version$major>=2)){
+  .draw.grid.text<-function(xx,xpos,ypos,just,rot,overlap){
+    .Call.graphics("L_text", xx, xpos, ypos,grid:::resolveHJust(just,NULL),grid:::resolveVJust(just,NULL), 0, overlap,PACKAGE="grid")
+  }
+} else {
+  .draw.grid.text<-function(xx,xpos,ypos,just,rot,overlap){
+    .Call.graphics("L_text", xx, xpos, ypos,just, 0, overlap,PACKAGE="grid")
+  }
+}       
+
+if ((R.version$major>=2) & (R.version$minor>=3)){
+  .draw.grid.lines<-function(x,y){    
+    .Call.graphics("L_lines",x,y,list(as.integer(1:length(y))),NULL,PACKAGE="grid")
+  }  
+  .draw.grid.segments<-function(x1,y1,x2,y2){
+    .Call.graphics("L_segments",x1,y1,x2,y2,NULL,PACKAGE="grid")
+  }      
+} else {
+  .draw.grid.lines<-function(x,y){    
+    .Call.graphics("L_lines",x,y,PACKAGE="grid")
+  }
+  .draw.grid.segments<-function(x1,y1,x2,y2){
+    .Call.graphics("L_segments",x1,y1,x2,y2,PACKAGE="grid")
+  }
+}
+
 print.panel <- function(x,...){
   print(x$border$title)
 }
@@ -24,9 +50,11 @@ BULLET<-function(panel=1,element=1){
                                         #create a function call to be evaluated then bullet is to be redrawn
                                #its comment is a command which was used to invoke this procedure. The comment is used to convert call back to string representation
   comment(z)<-paste("BULLET(panel=",panel,",element=",element,")")
+  attr(z,"source")<-comment(z)
   class(z) <- "extplotmath"
   return(z)
 }
+
 
 figure.back<- function(width=640,height=480,cells=10){
 
@@ -38,7 +66,7 @@ figure.back<- function(width=640,height=480,cells=10){
   }
 
   
-  panel<-function(x=c(2,9),y=c(2,9),scale.X=c(-10,10),scale.Y=c(-10,10),xticks=c("","Inf"),yticks=c("","Inf"),xlab=c("X Label",""),ylab=c("Y Label", ""),ticks.in=TRUE,grill=FALSE,Plabel=paste("Panel",panelsCount),gp=gpar(lwd=2,fontsize=12,fontface=1),GROB=NULL,select=0,update.GUI=TRUE ){
+  panel<-function(x=c(2,9),y=c(2,9),scale.X=c(-10,10),scale.Y=c(-10,10),xticks=c("","Inf"),yticks=c("","Inf"),xlab=c("X Label",""),ylab=c("Y Label", ""),ticks.in=TRUE,grill=FALSE,Plabel=paste("Panel",panelsCount),gp=gpar(col="black",lwd=2,fontsize=12,fontface=1),GROB=NULL,select=0,update.GUI=TRUE ){
     edit <- function(...,scale.X=NULL,scale.Y=NULL,x=NULL,y=NULL, update.GUI=TRUE){
       if (is.null(scale.X)&is.null(scale.Y)&is.null(x)&is.null(y)){
         grid.edit(border$name,...,redraw=TRUE,strict=TRUE)
@@ -207,38 +235,52 @@ figure.back<- function(width=640,height=480,cells=10){
   save <- function(FileSel) {
     set.active()
     cat("",file=FileSel)
+    cat("current.Figure$clear()",file=FileSel,fill=T,append=T)
+    DL<-getNames()
+    sapply(DL,function(x){
+      .pnt <- grid.get(x)
+      if (is.null(.pnt$vp)){
+        dump(".pnt",append=T,file=FileSel)
+        cat("grid.draw(.pnt)",file=FileSel,fill=T,append=T)
+      }
+    })
     sapply(panels,function(x){
-      brd <- grid.get(x$border$name)      
+      brd <- grid.get(x$border$name)
+      DL<<-DL[-match(x$border$name,DL)]
       xpos <- brd$vp[["layout.pos.col"]]
       ypos <- brd$vp[["layout.pos.row"]]
       scX <- brd$vp[["xscale"]]
       scY <- brd$vp[["yscale"]]
       gp1 <- brd$gp
-      panel.labels <- serialize(brd$label,connection=NULL,ascii=TRUE)
+      panel.labels <- rawToChar(serialize(brd$label,connection=NULL,ascii=TRUE))
       dump(c("gp1","panel.labels"),file=FileSel,append=TRUE)
       cat("brd.lab<-unserialize(connection=panel.labels)",file=FileSel,fill=TRUE,append=TRUE)
       cat(paste("XPANEL<-current.Figure$panel(x=c(",paste(xpos,collapse=","),"),y=c(",paste(ypos,collapse=","),"),scale.X=c(",paste(scX,collapse=","),"),scale.Y=c(",paste(scY,collapse=","),"),Plabel=",deparse(brd$title,width.cutoff = 500),",xlab=brd.lab[1:2],ylab=brd.lab[3:4],xticks=c(",paste(deparse(brd$at[[1]],width.cutoff = 500),deparse(brd$at[[2]],width.cutoff = 500),sep=","),"),yticks=c(",paste(deparse(brd$at[[3]],width.cutoff=500),deparse(brd$at[[4]],width.cutoff = 500),sep=","),"),grill=",brd$grilled,",ticks.in=",brd$inward,",gp=gp1,update.GUI=FALSE)",sep=""),file=FileSel,fill=TRUE,append=TRUE)
       els <- x$elements
       lapply(els,function(pnt){
         z <- grid.get(pnt$name)
+        DL<<-DL[-match(pnt$name,DL)]
         x <- z$x
         y <- z$y
         w <- z$w
         h <- z$h
+
         gp1 <- z$gp
 	pch1<-as.integer(z$pch)
         size1<-as.numeric(z$size)
-        dump(c("x","y","w","h","gp1","pch1","size1"),append=TRUE,file=FileSel)
-        cat(paste("XPANEL$element(x=x,y=y,w=w,h=h,pch=pch1,size=size1,gp=gp1,Elabel=",deparse(pnt$title,width.cutoff = 500),",rescale=FALSE,update.GUI=FALSE)",sep=""),file=FileSel,fill=TRUE,append=TRUE)
+        errstyle1 <- z$errstyle
+        dump(c("x","y","w","h","gp1","pch1","size1","errstyle1"),append=TRUE,file=FileSel)
+        cat(paste("XPANEL$element(x=x,y=y,w=w,h=h,pch=pch1,size=size1,gp=gp1,errstyle=errstyle1,Elabel=",deparse(pnt$title,width.cutoff = 500),",rescale=FALSE,update.GUI=FALSE)",sep=""),file=FileSel,fill=TRUE,append=TRUE)
       })
       anns <- x$annotations
       lapply(anns,function(xx){
         a <- grid.get(xx$name)
+        DL<<-DL[-match(xx$name,DL)]
         gp1 <- a$gp
         dump("gp1",file=FileSel,append=TRUE)
-        lbl<-serialize(a$label,connection=NULL,ascii=TRUE)
-        dump("lbl",file=FileSel,append=TRUE)
-        cat("label<-unserialize(connection=lbl)",file=FileSel,fill=TRUE,append=TRUE)
+        lab<-rawToChar(serialize(a$label,NULL,ascii=TRUE))
+        dump("lab",file=FileSel,append=TRUE)
+        cat("label<-unserialize(lab)",file=FileSel,fill=TRUE,append=TRUE)
         cat(paste("XPANEL$annotation(label=label,x=",as.numeric(a$x),",y=",as.numeric(a$y),",frame=",a$frame,",rot=",a$rot,",gp=gp1)", sep=""),file=FileSel,fill=TRUE,append=TRUE)
       })           
     })
@@ -247,6 +289,7 @@ figure.back<- function(width=640,height=480,cells=10){
   }
   
   hardcopy <- function(l=c("PS","PNG","PDF","PDFwrite")){
+    print(l)
     set.active()
     switch(l,
            PS=postscript("RPlots.ps"),
@@ -254,7 +297,16 @@ figure.back<- function(width=640,height=480,cells=10){
            PNG=png("RPlots.png"),
            PDFwrite=bitmap("RPlots.pdf",type="pdfwrite",width=11.69,height=8.62)
            )
+    f<-getNames()
+    gnull<-list()
+    for (g in f) {
+      g1<-grid.get(g)
+      if (is.null(g1$vp)){
+        gnull<-append(gnull,list(g1))
+      }
+    }
     print.dev <- dev.cur()[[1]]
+    lapply(gnull,grid.draw)
     v1<-viewport(w=1,h=1,layout=grid.layout(nrow=cells,ncol=cells),clip=T)
     grid.rect(width=unit(1,"npc")+unit(0.5,"inches"),height=unit(1,"npc")+unit(0.5,"inches"),gp=gpar(col=ps.options()$bg,fill=ps.options()$bg))
     pushViewport(v1)
@@ -376,8 +428,20 @@ figure.back<- function(width=640,height=480,cells=10){
   engine.display.list(FALSE)
   dev.control("inhibit")
   set.active()
-  VP <- viewport(w=1,h=1,layout=grid.layout(nrow=cells,ncol=cells))
+  VP <- viewport(w=1,h=1,layout=grid.layout(nrow=cells,ncol=cells),gp=gpar(col="black"))
   pushViewport(VP)
   return(current.Figure)
+
+}
+
+.z.interface <- function(width=1000,height=2000,cells=10){
+  redraw <- function(...){
+#    v()
+  }
+  fig <- figure.back(width=width,height=height,cells=cells)
+  fig$PANEL.CB <- redraw
+  fig$ANNOTATION.CB <- redraw
+  fig$ELEMENT.CB <- redraw
+  return(fig)
 
 }

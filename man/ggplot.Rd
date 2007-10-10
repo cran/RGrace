@@ -4,6 +4,7 @@
 \description{
   Plot \code{y} vs. \code{x} data. The preferred way to do plotting. 
 }
+
 \usage{
 ggplot(... ,panel=nearestPanel())
 }
@@ -38,7 +39,6 @@ ggplot(... ,panel=nearestPanel())
   
 }
 \examples{
-library(RGrace)
 #open new figure
 #as an alternative to the gtkDevice standard x11 device can be used (uncomment next 2 lines)
 #figure<-.z.interface

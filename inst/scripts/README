@@ -1,5 +1,7 @@
 Here is several optional scripts not strictly required by RGrace
 
+gdk2.interface.R - sample interface built over standard one with gdkDevice2 graphic device instead gtkCairo.
+
 RGrace.Rnw - example Sweave file with RGrace graphics.
 
 figure.startup.exmpl.R - script to build optional menus on RGrace figure. It is supposed to be called from .Rprofile file (or just before RGrace loading) to override default empty figure.startup functions. Example of my .Rprofile is in Example section of RGrace-GUI.Rd.
@@ -7,3 +9,6 @@ figure.startup.exmpl.R - script to build optional menus on RGrace figure. It is 
 db.wisards.R - GUI wisards to import/export data from special MySQL database where I store my data.  
 
 LabLog.create.sql -  the SQL script to create this mysql db. 
+
+select_all_query.sql - sample SQL query to select all entries in LabLog database limited to top 10 entries. 
+

@@ -1,12 +1,12 @@
 wisard.in <- function(frame,frame.name){
   select.role <- function(List,Item){
     role <- .Roles[gtkListChildPosition(List,Item)+1]
-    z <- gsub("rolelist","stretch.w",List[["name"]],extended=T)
+    z <- gsub("rolelist","stretch.w",List["name"],extended=T)
     get(z)->check
     if (role%in%c("Color","Symbol","Size")){
-      check[["sensitive"]] <- T
+      check["sensitive"] <- T
     } else {
-      check[["sensitive"]] <- F
+      check["sensitive"] <- F
       check$SetActive(F)
     }
   }
@@ -19,14 +19,14 @@ wisard.in <- function(frame,frame.name){
     z <- ls(envir=parent.env(environment()))
 #    print(z)
     fr.env<-attach(frame)
-    f <- grep("\.role\.w",z,extended=TRUE,value=TRUE)
-    f <- gsub("\.role\.w","",f,extended=TRUE)
+    f <- grep("\\.role\\.w",z,extended=TRUE,value=TRUE)
+    f <- gsub("\\.role\\.w","",f,extended=TRUE)
     draw.frame <- frame
     draw.frame$X <- seq(along=draw.frame[[1]])
     comment(draw.frame$X) <- "seq"
     for (i in f){
       get(paste(i,".role.w",sep=""))->z
-      z$GetEntry()$GetText()->l
+      .Roles[z$GetActive()+1]->l
       if(l=="None"){
         draw.frame[[i]]<-NULL
         next
@@ -50,10 +50,10 @@ wisard.in <- function(frame,frame.name){
     w$Destroy()
   }
   w <- gtkWindow()
-  w$Add(v <- gtkVBox(FALSE,5))
+  w$Add(v <- gtkVBox(FALSE))
   
-  v$Add(h <- gtkHBox(TRUE,2))
-  v$SetChildPacking(h,FALSE,FALSE,0)
+  v$Add(h <- gtkHBox(TRUE))
+  v$SetChildPacking(h,FALSE,FALSE,0,as.integer(0))
   h$Add(gtkLabel("Column"))
   h$Add(gtkLabel("Role"))
 #  h$Add(gtkLabel("Options"))
@@ -61,24 +61,23 @@ wisard.in <- function(frame,frame.name){
   .Roles <- c("X",paste("Y",1:k,sep=""),"ErrX",paste("ErrY",1:k,sep=""),"Color","Symbol","Size","None")
   l<-1
   for (i in names(frame)){
-    v$Add(h <- gtkHBox(TRUE,2))
-    v$SetChildPacking(h,FALSE,FALSE,0)
+    v$Add(h <- gtkHBox(TRUE))
+    v$SetChildPacking(h,FALSE,FALSE,2,as.integer(0))
     h$Add(z <- gtkEntry())
     z$SetText(i)
-    h$Add(z1 <- gtkCombo())
-    z1$SetPopdownStrings(.Roles)
-    lis <- z1$GetList()
-    lis[["name"]] <- paste(i,".rolelist",sep="")
+    h$Add(z1 <- gtkComboBoxNewText())
+    sapply(.Roles,function(x){z1$AppendText(x)})
+    z1["name"] <- paste(i,".rolelist",sep="")
     switch(l,
            {
-             z1$GetEntry()$SetText("X")
+             z1$SetActive(0)
              l<-l+1
            },
            {
-             z1$GetEntry()$SetText("Y1")
+             z1$SetActive(1)
              l <- l+1
            },
-           {z1$GetEntry()$SetText("None")})
+           {z1$SetActive(length(.Roles)-1)})
 #    h$Add(z2 <- gtkCheckButton("Stretch?"))
 #    z2[["sensitive"]] <- FALSE
     assign(paste(i,".name.w",sep=""),z)
@@ -86,20 +85,22 @@ wisard.in <- function(frame,frame.name){
 #    assign(paste(i,".stretch.w",sep=""),z2)
 #    z1$GetList()$AddCallback("select-child",select.role)
   }
-  v$Add(h <- gtkHBox(FALSE,3))
-  v$SetChildPacking(h,FALSE,FALSE,0)
+  v$Add(h <- gtkHBox(FALSE))
+  v$SetChildPacking(h,FALSE,FALSE,0,as.integer(0))
   h$Add(ok.b <- gtkButton("Apply"))
   h$Add(cancel.b <- gtkButton("Close"))
-  ok.b[["can_default"]]<-T
-  cancel.b[["can_default"]]<-T
-  ok.b[["has_default"]]<-T
+  ok.b["can-default"]<-T
+  cancel.b["can-default"]<-T
+  ok.b["has-default"]<-T
   ok.b$AddCallback("clicked",ok.clicked)
   cancel.b$AddCallback("clicked",on.close)
   w$AddCallback("delete-event",on.close)
+  w$ShowAll()
   return(environment())
 }
 
-wisard.out <- function(curve,commit.function=NULL,var.names=NULL,var.units=NULL){
+wisard.out <- function(curve,var.names=NULL,var.units=NULL){
+  COMMIT.CB<-function(df){return(df)}
   ok.clicked <- function(...){
     l <- data.frame()
     for (i in c("X","Y","W","H","Size","Symbol","Color") ){
@@ -123,9 +124,7 @@ wisard.out <- function(curve,commit.function=NULL,var.names=NULL,var.units=NULL)
         l<-c(l,p)
        }     
     }
-    if (!is.null(commit.function)){
-      commit.function(l)
-    }
+    COMMIT.CB(l)
     w$Destroy()
   }
   X <- curve$x
@@ -138,10 +137,10 @@ wisard.out <- function(curve,commit.function=NULL,var.names=NULL,var.units=NULL)
   levels(Color) <- seq(along=palette())
   Color <- as.numeric(Color)
   w <- gtkWindow()
-  w$Add(v <- gtkVBox(FALSE,5))
+  w$Add(v <- gtkVBox(FALSE))
   
-  v$Add(h <- gtkHBox(TRUE,2))
-  v$SetChildPacking(h,FALSE,FALSE,0)
+  v$Add(h <- gtkHBox(TRUE))
+  v$SetChildPacking(h,FALSE,FALSE,2,as.integer(0))
   h$Add(gtkLabel("Data"))
   h$Add(gtkLabel("Include?"))
   if (!is.null(var.names)){
@@ -151,8 +150,8 @@ wisard.out <- function(curve,commit.function=NULL,var.names=NULL,var.units=NULL)
     }
   }
   for (i in c("X","Y","W","H","Size","Symbol","Color")){
-    v$Add(h <- gtkHBox(TRUE,2))
-    v$SetChildPacking(h,FALSE,FALSE,0)
+    v$Add(h <- gtkHBox(TRUE))
+    v$SetChildPacking(h,FALSE,FALSE,2,as.integer(0))
     h$Add(z <- gtkEntry())
     z$SetText(i)
     h$Add(z2 <- gtkCheckButton(""))
@@ -173,15 +172,16 @@ wisard.out <- function(curve,commit.function=NULL,var.names=NULL,var.units=NULL)
       }
     }
   }
-  v$Add(h <- gtkHBox(FALSE,3))
-  v$SetChildPacking(h,FALSE,FALSE,0)
+  v$Add(h <- gtkHBox(FALSE))
+  v$SetChildPacking(h,FALSE,FALSE,2,as.integer(0))
   h$Add(ok.b <- gtkButton("OK"))
   h$Add(cancel.b <- gtkButton("Cancel"))
-  ok.b[["can_default"]]<-T
-  cancel.b[["can_default"]]<-T
-  ok.b[["has_default"]]<-T
+  ok.b["can-default"]<-T
+  cancel.b["can-default"]<-T
+  ok.b["has-default"]<-T
   ok.b$AddCallback("clicked",ok.clicked)
   cancel.b$AddCallback("clicked",function(...){ w$Destroy() })
   w$AddCallback("delete-event",function(...){ w$Destroy() })
+  w$ShowAll()
   return(environment())
 }

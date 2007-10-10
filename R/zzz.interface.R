@@ -1,30 +1,57 @@
-.onLoad <- function(lib,pkg){
-                                        #.First.lib <- function(lib, pkg) {
-#  library.dynam("RGrace", pkg, lib)
-  require(RGtk)
-  require(gtkDevice)
+.onLoad <- function(lib, pkg) {
+  require(RGtk2)
+#  require(gtkDevice2)
+  require(cairoDevice)
   current.Figure <<-NULL
   .Kill.Structure<<-NULL
-  gtkSetLocale()
   require(grid)
-  drawDetails.data<<-drawDetails.data.old
-  drawDetails.annotation<<-drawDetails.annotation.old
   if (R.version$major>=2){
     require(grDevices)
-    if (R.version$minor>=3){
-      drawDetails.data<<-drawDetails.data.new
-      drawDetails.annotation<<-drawDetails.annotation.new
-    }
   } else {
     require(graphics)
   }
   ps.options(width=1000,height=500,horizontal=TRUE,paper="a4")
   default.hooks()  
   figure()
+}
 
+gtkComboBoxEntrySetPopdownStrings<-function(object,strings){
+  object$SetModel(rGtkDataFrame(as.data.frame(strings)))
+  if (length(strings)>0) {
+    if(object$GetTextColumn()!=0){
+      object$SetTextColumn(0)
+      object$SetActive(0)
+    }
+  } 
 }
 
 
+GetOkButton <- function(obj){
+  if ("GtkFileChooserDialog"%in%class(obj)){
+    obj$GetChildren()[[1]]$GetChildren()[[2]]$GetChildren()[[1]]
+  }
+  if ("GtkFileSelection"%in%class(obj)){
+    obj$GetOkButton()
+  }
+}
+
+GetCancelButton <- function(obj){
+ if ("GtkFileChooserDialog"%in%class(obj)){
+    obj$GetChildren()[[1]]$GetChildren()[[2]]$GetChildren()[[2]]
+  }
+  if ("GtkFileSelection"%in%class(obj)){
+    obj$GetCancelButton()
+  }
+}
+
+
+tolocale<-function(x){
+  return(iconv(x,"UTF8",""))
+}
+
+toutf<-function(x){
+  return(iconv(x,"","UTF8"))
+}
   .Line.Names<-c("Line:No",
                   "Line:Solid",
                   "Line:Dashed",
@@ -62,6 +89,14 @@
                     "Symbol: No"
                     )
 
+.Line.Names<-c("Line:No",
+                  "Line:Solid",
+                  "Line:Dashed",
+                  "Line:Dotted",
+                  "Line:Dash-dotted",
+                  "Line:Long-dashed",
+                  "Line:Short-long-dashed")
+
 .Face.Names <- c("plain",
                  "bold",
                  "italic",
@@ -72,6 +107,10 @@
                  "Selected Point",
                  "Points with the Same Values"
                  )
+
+.Err.Style <- c("whiskers",
+                "areafill",
+                "arrows")
 
 
 nearestPanel <- function(){
@@ -92,9 +131,7 @@ ggplot <- function(...,panel=nearestPanel()) {
 }
 
 
-
-
-.GTK.interface<- function(width=400,height=400,cells=10){
+.GTK2.interface<- function(width=400,height=400,cells=10){
 #  cells<-cells
 #  width<-width
 #  height<-height
@@ -103,13 +140,23 @@ ggplot <- function(...,panel=nearestPanel()) {
   FileSel <- NULL
   .Click.Inside.Area <- FALSE
   Interaction.Type <- "select.element1"
+  if (!exists("figure.startup"))
+    figure.startup <<- default.figure.startup
+  
+  gladewidget<-function(name,tree=XML){
+    w<-gladeXMLGetWidget(tree,name)
+    class(w)<-gtkObjectGetClasses(w,check=F)
+    w
+  }
 
+  
   rescan.elements <- function(panel){
     strings <- sapply(panel$elements,function(i){ i$title})
     if (!is.null(as.pairlist(strings))) {
       elements.w$SetPopdownStrings(strings)
+#      elements.w$SetActive(0)
     } else {
-      elements.w$GetList()$ClearItems(0,-1)
+      elements.w$SetPopdownStrings(NULL)
     }
 
   }
@@ -123,9 +170,11 @@ ggplot <- function(...,panel=nearestPanel()) {
     })
     if (!is.null(as.pairlist(strings))) {
       combo1.w$SetPopdownStrings(strings)
+#      combo1.w$SetActive(0)
     } else {
-      combo1.w$GetList()$ClearItems(0,-1)
+      combo1.w$SetPopdownStrings(NULL)
     }
+    VB.w$GetWindow()$ProcessUpdates(T); VB.w$QueueDraw()	
   }
 
 
@@ -133,9 +182,13 @@ ggplot <- function(...,panel=nearestPanel()) {
     if (rescan) {
       rescan.elements(panel)
     } else {
-      index.w$SetAdjustment(gtkAdjustment(value=0,lower=1,upper=length(grid.get(panel$elements[[panel$.Selected.Element]]$name)$x),step.increment=1,page.increment=10,page.size=10))
+      z <- grid.get(panel$elements[[panel$.Selected.Element]]$name)
+      index.w$SetAdjustment(gtkAdjustment(value=0,lower=1,upper=length(z$x),step.incr=1,page.incr=10,page.size=10))
+      errstyle.w$GetChildren()[[1]]$SetText(z$errstyle)
       index.w$SetValue(panel$.Index)
+      on.change.index()
     }
+    VB.w$GetWindow()$ProcessUpdates(T); VB.w$QueueDraw()
   }
 
   panel.GUI <- function(panel,rescan=FALSE){
@@ -155,24 +208,25 @@ ggplot <- function(...,panel=nearestPanel()) {
       ticksdir.w$SetActive(Z$inward)
       lapply(list(list(x1.w,x1label.w,1),list(x2.w,x2label.w,2),list(y1.w,y1label.w,3),list(y2.w,y2label.w,4)),function(x){
         x[[1]]$SetText(Z$at[x[[3]]])
-        x[[2]]$SetText(deparse(Z$label[[x[[3]]]],width.cutoff=500))
+         x[[2]]$SetText(toutf(deparse(Z$label[[x[[3]]]],width.cutoff=500)))
       })
       rescan.elements(fig$current.Panel)
     }
+	VB.w$GetWindow()$ProcessUpdates(T); VB.w$QueueDraw()
   }
   
   annotation.GUI <- function(panel,rescan=FALSE){
     if (!is.null(panel$.Selected.Annotation)){
       grob <- panel$annotations[[panel$.Selected.Annotation]]
-      annot.text.w$DeleteText(start=0,end=-1)
-      annot.text.w$Insert(chars=paste(lapply(grid.get(grob$name)$label,function(x){if (inherits(x,"extplotmath")) { x} else { deparse(x,width.cutoff = 500)}} ),collapse="\n"))
+      annot.text.w$SetText(toutf(paste(lapply(grid.get(grob$name)$label,function(x){if (inherits(x,"extplotmath")) { x} else { deparse(x,width.cutoff = 500)}} ),collapse="\n")))
       rotatetext.w$SetValue(grid.get(grob$name)$rot)
       text.frame.w$SetActive(grid.get(grob$name)$frame)
       gp1 <- grid.get(grob$name)$gp
-      text.color.w$GetEntry()$SetText(ifelse(is.null(gp1$col),"default",gp1$col))
-      text.face.w$GetEntry()$SetText(ifelse(is.null(gp1$fontface),"default",gp1$fontface))
+      text.color.w$GetChildren()[[1]]$SetText(ifelse(is.null(gp1$col),"default",gp1$col))
+      text.face.w$GetChildren()[[1]]$SetText(ifelse(is.null(gp1$fontface),"default",gp1$fontface))
       text.points.w$SetValue(ifelse(is.null(gp1$fontsize),0,gp1$fontsize))
     }
+	VB.w$Show()
   }
   
 
@@ -180,7 +234,7 @@ ggplot <- function(...,panel=nearestPanel()) {
     fig$current.Panel$.Index <<- index.w$GetValueAsInt()
     c <-grid.get(fig$current.Panel$elements[[fig$current.Panel$.Selected.Element]]$name,strict=TRUE) 
     fig$current.Panel$.Pch<<-c$pch[[(fig$current.Panel$.Index-1)%%length(c$pch)+1]]
-    symmenu.w$GetList()$SelectItem(fig$current.Panel$.Pch)
+    symmenu.w$SetActive(fig$current.Panel$.Pch)
     fig$current.Panel$.Size <<-c$size[[(fig$current.Panel$.Index-1)%%length(c$size)+1]]
     symsize.w$SetValue(as.numeric(fig$current.Panel$.Size))
     z <- c$gp
@@ -189,11 +243,11 @@ ggplot <- function(...,panel=nearestPanel()) {
     if (is.null(z$lwd)){z$lwd <- 0}
     if (is.null(z$lty)){z$lty <- 0}
     fig$current.Panel$.Fill<<-z$fill[[(fig$current.Panel$.Index-1)%%length(z$fill)+1]]
-    fillcol.w$GetEntry()$SetText(fig$current.Panel$.Fill)
-    linemenu.w$GetList()$SelectItem(z$lty)
+    fillcol.w$GetChildren()[[1]]$SetText(fig$current.Panel$.Fill)
+    linemenu.w$SetActive(z$lty)
     linsize.w$SetValue(z$lwd)
     fig$current.Panel$.Col<<-z$col[[(fig$current.Panel$.Index-1)%%length(z$col)+1]]
-    linecol.w$GetEntry()$SetText(fig$current.Panel$.Col)
+    linecol.w$GetChildren()[[1]]$SetText(fig$current.Panel$.Col)
     xdata.w$SetText(as.character(c$x[[fig$current.Panel$.Index]]))
     ydata.w$SetText(as.character(c$y[[fig$current.Panel$.Index]]))
     wdata.w$SetText(ifelse(is.null(f <- c$w[[(fig$current.Panel$.Index-1)%%length(c$w)+1]]),"",as.character(f)))
@@ -202,10 +256,11 @@ ggplot <- function(...,panel=nearestPanel()) {
 
   stroke <- function(win,arg){
     if (.Click.Inside.Area){
-      .C("draw_rubber_box",win,as.integer(xb),as.integer(yb),PACKAGE="RGrace")
+      crosshair(as.integer(xb),as.integer(yb))
       xb<<-as.double(gdkEventMotionGetX(arg))
       yb<<-as.double(gdkEventMotionGetY(arg))
-      .C("draw_rubber_box",win,as.integer(xb),as.integer(yb),PACKAGE="RGrace")
+      crosshair(as.integer(xb),as.integer(yb))
+
     }
   }
 
@@ -247,15 +302,15 @@ ggplot <- function(...,panel=nearestPanel()) {
     ya<<-as.double(gdkEventButtonGetY(arg))
     xb <<- xa+1
     yb <<- ya+1
-    .C("draw_rubber_box",win,as.integer(xa),as.integer(ya),PACKAGE="RGrace")
-    .C("draw_rubber_box",win,as.integer(xb),as.integer(yb),PACKAGE="RGrace")
+    crosshair(as.integer(xa),as.integer(ya))
+    crosshair(as.integer(xb),as.integer(yb))
   }
 
   end.stroke<-function(win, arg) {
     if(!.Click.Inside.Area) return(NULL)
     .Click.Inside.Area <<- FALSE 
-    .C("draw_rubber_box",win,as.integer(xb),as.integer(yb),PACKAGE="RGrace")
-    .C("draw_rubber_box",win,as.integer(xa),as.integer(ya),PACKAGE="RGrace")
+    crosshair(as.integer(xa),as.integer(ya))
+    crosshair(as.integer(xb),as.integer(yb))
     xb<-as.double(gdkEventButtonGetX(arg))
     yb<-as.double(gdkEventButtonGetY(arg))
     vp<-grid.get(fig$current.Panel$border$name,strict=TRUE)$vp
@@ -264,7 +319,7 @@ ggplot <- function(...,panel=nearestPanel()) {
     if (PlaceNewAnnotation) {
       new.annot.w$SetActive(FALSE)
       PlaceNewAnnotation <<- FALSE        
-      fig$current.Panel$annotation(label=eval(parse(text=paste("list(",gsub("\n",",",annot.text.w$GetChars(start=0,end=-1)),")",sep=""))),x=xx[1],y=yy[1],rot=rotatetext.w$GetValueAsInt(),frame=as.numeric(text.frame.w$GetActive()),gp=annot.get.gp.GUI(),update.GUI=TRUE)
+      fig$current.Panel$annotation(label=eval(parse(text=paste("list(",gsub("\n",",",tolocale(annot.text.w["text"])),")",sep=""))),x=xx[1],y=yy[1],rot=rotatetext.w$GetValueAsInt(),frame=as.numeric(text.frame.w$GetActive()),gp=annot.get.gp.GUI(),update.GUI=TRUE)
       return()
     }
     switch(Interaction.Type,
@@ -277,7 +332,7 @@ ggplot <- function(...,panel=nearestPanel()) {
              indx<- which.min(l1["value",])
              if (l1["value",indx]>0.02) {return()}
              fig$current.Panel$.Selected.Element <<- indx
-             elements.w$GetList()$SelectItem(fig$current.Panel$.Selected.Element-1)
+             elements.w$SetActive(fig$current.Panel$.Selected.Element-1)
              fig$current.Panel$.Index <<- l1["index",indx][[1]]
              index.w$SetValue(fig$current.Panel$.Index)
              dataline <- fig$current.Panel$elements[[fig$current.Panel$.Selected.Element]]
@@ -330,11 +385,11 @@ ggplot <- function(...,panel=nearestPanel()) {
     rang <- sapply(c("xrang1.w","xrang2.w","yrang1.w","yrang2.w"),function(x){
       if(is.na(j <- as.double(get(x)$GetText()))) NULL else j
     })
-    fig$current.Panel$edit(label=list(eval(parse(text=x1label.w$GetText())),eval(parse(text=x2label.w$GetText())),eval(parse(text=y1label.w$GetText())),eval(parse(text=y2label.w$GetText()))),at=list(x1.w$GetText(),x2.w$GetText(),y1.w$GetText(),y2.w$GetText()),grilled=grill.w$GetActive(),inward=ticksdir.w$GetActive(),y=c(y,ya),x=c(x,xa),scale.X=rang[1:2],scale.Y=rang[3:4])
+    fig$current.Panel$edit(label=list(eval(parse(text=tolocale(x1label.w$GetText()))),eval(parse(text=tolocale(x2label.w$GetText()))),eval(parse(text=tolocale(y1label.w$GetText()))),eval(parse(text=tolocale(y2label.w$GetText())))),at=list(tolocale(x1.w$GetText()),tolocale(x2.w$GetText()),tolocale(y1.w$GetText()),tolocale(y2.w$GetText())),grilled=grill.w$GetActive(),inward=ticksdir.w$GetActive(),y=c(y,ya),x=c(x,xa),scale.X=rang[1:2],scale.Y=rang[3:4])
   }
 
-   on.sel.element<-function(List, Item) {
-    fig$current.Panel$element(select=List$ChildPosition(Item)+1)
+   on.sel.element<-function(List) {
+     fig$current.Panel$element(select=List$GetActive()+1)
   }
 
   on.delete.element <- function(...){
@@ -344,7 +399,7 @@ ggplot <- function(...,panel=nearestPanel()) {
   on.apply.annot <- function(...) {
     fig$set.active()
     if (!is.null(fig$current.Panel$.Selected.Annotation)) {
-      grid.edit(fig$current.Panel$annotations[[fig$current.Panel$.Selected.Annotation]]$name,label=eval(parse(text=paste("list(",gsub("\n",",",annot.text.w$GetChars(start=0,end=-1)),")",sep=""))),rot=rotatetext.w$GetValueAsInt(),frame=text.frame.w$GetActive(),gp=annot.get.gp.GUI())
+      grid.edit(fig$current.Panel$annotations[[fig$current.Panel$.Selected.Annotation]]$name,label=eval(parse(text=paste("list(",gsub("\n",",",tolocale(annot.text.w["text"])),")",sep=""))),rot=rotatetext.w$GetValueAsInt(),frame=text.frame.w$GetActive(),gp=annot.get.gp.GUI())
     }
   }
 
@@ -361,7 +416,7 @@ ggplot <- function(...,panel=nearestPanel()) {
     size <- c$size
     GP <- c$gp
 
-    switch(which(.CS.INFO==cs.info.w$GetEntry()$GetText()),
+    switch(cs.info.w$GetActive()+1,
            {
              index <- seq(along=pch)
              index1 <- seq(along=size)
@@ -383,21 +438,19 @@ ggplot <- function(...,panel=nearestPanel()) {
            )
     if (is.null(GP$col)){ index2 <- 1}
     if (is.null(GP$fill)){ index3 <- 1}
-    pch[index] <- which(.Symbol.Names==symmenu.w$GetEntry()$GetText())-1
+    pch[index] <- symmenu.w$GetActive()
     fig$current.Panel$.Pch <<- pch[index[1]]
-    size[index1] <- symsize.w$GetValueAsFloat()
+    size[index1] <- symsize.w$GetValue()
     fig$current.Panel$.Size<<-size[index1[1]]
-    GP$lty <- which(.Line.Names==linemenu.w$GetEntry()$GetText())-1
-    if((k <- linsize.w$GetValueAsFloat())!=0) GP$lwd <- k
-    if((k <- linecol.w$GetEntry()$GetText())!="default") {
+    GP$lty <- linemenu.w$GetActive()
+    if((k <- linsize.w$GetValue())!=0) GP$lwd <- k
+    if((k <- linecol.w$GetActiveText())!="default") {
       GP$col[index2] <- k
     } else {
-      
         GP$col[index2] <- NULL
-      
     }
     fig$current.Panel$.Col<<- GP$col[index2[1]]
-    if((k <- fillcol.w$GetEntry()$GetText())!="default") {
+    if((k <- fillcol.w$GetActiveText())!="default") {
       GP$fill[index3] <- k
     } else {
         GP$fill[index3] <- NULL
@@ -415,15 +468,16 @@ ggplot <- function(...,panel=nearestPanel()) {
     if (!is.na(k <- as.numeric(ydata.w$GetText()))){
       c$y[fig$current.Panel$.Index] <- k
     }
-    grid.edit(points$name,x=c$x,y=c$y,w=c$w,h=c$h,pch=as.integer(pch),size=size,gp=GP,strict=TRUE)      
+    es<-errstyle.w$GetChildren()[[1]]$GetText()
+    grid.edit(points$name,x=c$x,y=c$y,w=c$w,h=c$h,pch=as.integer(pch),size=size,gp=GP,errstyle=es,strict=TRUE)      
   }
 
-  select.interaction <- function(z){
+  select.interaction <- function(z){    
     Interaction.Type<<-z$GetName()
   }
   
-  on.select.panel<-function(List, Item) {   
-    fig$panel(select=gtkListChildPosition(List,Item)+1)
+  on.select.panel<-function(List) {   
+    fig$panel(select=List$GetActive()+1)
   }
 
   on.delete.panel <- function(...){
@@ -440,18 +494,20 @@ ggplot <- function(...,panel=nearestPanel()) {
   }
   
   on.saveas1.activate <- function(...){
-    F1.w <<- gtkFileSelection("Save Figure")
-    F1.w$SetFilename(paste(getwd(),"/",sep=""))	
-    F1.w$GetOkButton()$AddCallback("clicked",FS.ok.button2.clicked)
-    F1.w$GetCancelButton()$AddCallback("clicked",FS.cancel.button2.clicked)
+#    F1.w <<- gtkFileChooserDialog(parent=NULL,title="Save Figure",action="save","gtk-cancel",GtkResponseType["cancel"],"gtk-save", GtkResponseType["accept"])
+    F1.w <<-  gtkFileSelection("Save Figure")
+    F1.w$SetFilename(paste(getwd(),"/",sep=""))
+    GetOkButton(F1.w)$AddCallback("clicked",FS.ok.button2.clicked)
+    GetCancelButton(F1.w)$AddCallback("clicked",FS.cancel.button2.clicked)
     F1.w$Show()
   }
 
   on.open1.activate <- function(...){
-    F1.w <<- gtkFileSelection("Open Figure")
+#    F1.w <<- gtkFileChooserDialog(parent=NULL,title="Open Figure",action="open","gtk-cancel",GtkResponseType["cancel"],"gtk-open", GtkResponseType["accept"])
+    F1.w <<-  gtkFileSelection("Open Figure")
     F1.w$SetFilename(paste(getwd(),"/",sep=""))
-    F1.w$GetOkButton()$AddCallback("clicked",FO.ok.button1.clicked)
-    F1.w$GetCancelButton()$AddCallback("clicked",FS.cancel.button2.clicked)
+    GetOkButton(F1.w)$AddCallback("clicked",FO.ok.button1.clicked)
+    GetCancelButton(F1.w)$AddCallback("clicked",FS.cancel.button2.clicked)
     F1.w$Show()
   }
 
@@ -471,8 +527,8 @@ ggplot <- function(...,panel=nearestPanel()) {
     F1.w$Destroy()
     if (file.exists(FS)){
       FileSel<<-FS
-      fig$clear()
-      panels <<-list()
+#      fig$clear()
+#      panels <<-list()
       source(FileSel,local=TRUE)
     }
   }
@@ -486,14 +542,15 @@ ggplot <- function(...,panel=nearestPanel()) {
       FS<- F1.w$GetFilename()
       F1.w$Destroy()
       e <- fig$current.Panel$elements[[ fig$current.Panel$.Selected.Element]]
-      wisard.out(grid.get(e$name),commit)
+      wisard.out(grid.get(e$name))$COMMIT.CB<-commit
     }
 
     fig$set.active()
-    F1.w <- gtkFileSelection("Write Data File",show=FALSE)
+    #F1.w <- gtkFileChooserDialog(parent=NULL,title="Write Data File",action="save","gtk-cancel",GtkResponseType["cancel"],"gtk-save", GtkResponseType["accept"])
+     F1.w <-  gtkFileSelection("Write Data File")
     F1.w$SetFilename(paste(getwd(),"/",sep=""))
-    F1.w$GetOkButton()$AddCallback("clicked",ok.button.clicked)
-    F1.w$GetCancelButton()$AddCallback("clicked",function(...){ F1.w$Destroy()})
+    GetOkButton(F1.w)$AddCallback("clicked",ok.button.clicked)
+    GetCancelButton(F1.w)$AddCallback("clicked",function(...){ F1.w$Destroy()})
     F1.w$Show()
   }
   
@@ -507,12 +564,12 @@ ggplot <- function(...,panel=nearestPanel()) {
         wisard.in(pp,FS)
       }
     }
-
     fig$set.active()
-    F1.w <- gtkFileSelection("Open Data File",show=FALSE)
+#    F1.w <-  gtkFileChooserDialog(parent=NULL,title="Open Data File",action="open","gtk-cancel",GtkResponseType["cancel"],"gtk-open", GtkResponseType["accept"])
+    F1.w <-  gtkFileSelection("Open Data File")
     F1.w$SetFilename(paste(getwd(),"/",sep=""))
-    F1.w$GetOkButton()$AddCallback("clicked",ok.button.clicked)
-    F1.w$GetCancelButton()$AddCallback("clicked",function(...){ F1.w$Destroy()})
+    GetOkButton(F1.w)$AddCallback("clicked",ok.button.clicked)
+    GetCancelButton(F1.w)$AddCallback("clicked",function(...){ F1.w$Destroy()})
     F1.w$Show()
   }
 
@@ -522,14 +579,17 @@ ggplot <- function(...,panel=nearestPanel()) {
   }
 
   on.slide.panel <- function(win,arg){
-    hPanedPos <<- !hPanedPos
-    gtkPanedSetPosition(win,-1*as.numeric(hPanedPos))
+
+    
+                                        #    hPanedPos <<- !hPanedPos
+#    gtkPanedSetPosition(win,-1*as.numeric(hPanedPos))
   }
   
   on.resize <- function(w1,w2){
     fig$set.active()
     class(w2)<-"GdkEventConfigure"
     fig$Scale <<- c(gdkEventConfigureGetWidth(w2),gdkEventConfigureGetHeight(w2))/fig$cells
+    return(TRUE)
   }
   
   on.ggRDev.destroy <- function(...){
@@ -558,8 +618,8 @@ ggplot <- function(...,panel=nearestPanel()) {
   }
 
   annot.get.gp.GUI <- function(with.color=TRUE){
-    GP <- gpar(lwd=2,fontsize=if(k <- text.points.w$GetValueAsInt()){k}else{NULL},fontface=if((j <- text.face.w$GetEntry()$GetText())!="default"){j}else{NULL})
-    if (with.color) { if((k <- text.color.w$GetEntry()$GetText())!="default"){GP$col <- k}}
+    GP <- gpar(lwd=2,fontsize=if(k <- text.points.w$GetValueAsInt()){k}else{NULL},fontface=if((j <- text.face.w$GetChildren()[[1]]$GetText())!="default"){j}else{NULL})
+    if (with.color) { if((k <- text.color.w$GetChildren()[[1]]$GetText())!="default"){GP$col <- k}}
     return(GP)
   }
 
@@ -575,325 +635,70 @@ ggplot <- function(...,panel=nearestPanel()) {
 
   on.newlegend <- function(...){
     fig$newlegend()
-  }  
-
-  ggRDev.w <- gtkWindow()
-  ggRDev.w$Add(hpaned1<-gtkHPaned())
-  hpaned1$SetPosition(0)
-  hpaned1$Add1(vbox1<-gtkVBox())
-  drawingarea1.w<-gtkDrawingArea()
-  drawingarea1.w$SetEvents(c("button1-motion-mask","button-press-mask","button-release-mask","key-press-mask","enter-notify-mask","leave-notify-mask","focus-change-mask"))
-  drawingarea1.w[["can_focus"]] <- TRUE
-  hpaned1$Add2(drawingarea1.w)
-
+  }
   
-  vbox1$Add(hbox1<-gtkHBox(2))
-  hbox1$Add(menubar1<-gtkMenuBar())
-  hbox1$Add(inter1<-gtkOptionMenu())
-  vbox1$SetChildPacking(hbox1,FALSE,FALSE,0)
-  vbox1$Add(nb1<-gtkNotebook())
-  vbox1$SetHomogeneous(FALSE)
+  COL<-FALSE
 
-  nb1$AppendPage(v2<-gtkVBox(2),gtkLabel("Panel"))
-  v2$SetHomogeneous(FALSE)
-  v2$Add(hb1<-gtkHBox(4))
-  v2$SetChildPacking(hb1,FALSE,FALSE,0)
+  collapse<-function(...){
+    if(COL){
+      VB.w$Show()
+      COL<<-FALSE
+    } else {
+      VB.w$Hide()
+      COL<<-TRUE
+     }
+  }
+     
+  XML <- gladeXMLNew(system.file("ggplot.glade",package="RGrace"))
+  sapply(c("spinpanely","spinpanelx","cs.info","spinpanelw","spinpanelh","drawingarea1","combo1","fillcol","linecol","elements","ticksdir","x1label","x2label","y1label","y2label","x1","y1","x2","y2","grill","xrang1","xrang2","yrang1","yrang2","symmenu","linemenu","symsize","linsize","new.annot","ggRDev","index","wdata","xdata","ydata","hdata","rotatetext","text.points","text.face","text.color","text.frame","VB","errstyle"),function(x){assign(paste(x,".w",sep=""),gladewidget(x),envir=parent.env(environment()))})
+  gladewidget("annot.text")->a
+  gtkTextBuffer()->annot.text.w
+ 
 
-  hb1$SetHomogeneous(TRUE)
-  hb1$Add(button1.w <- gtkButton("Apply"))
-  hb1$Add(del.panel.w <- gtkButton("Delete"))
-  del.panel.w$AddCallback("clicked",on.delete.panel)
-  hb1$Add(new.panel.w <- gtkButton("Add New"))
-  new.panel.w$AddCallback("clicked",button3.clicked)
-  hb1$Add(autorngbtn.w <- gtkButton("Auto Range"))
-
-  sapply(list(button1.w,new.panel.w,del.panel.w,autorngbtn.w),function(x){hb1$SetChildPacking(x,TRUE,TRUE,0)})
-
-  v2$Add(combo1.w<-gtkCombo())
-  v2$Add(hb2<-gtkHBox(2))
-  v2$SetChildPacking(combo1.w,FALSE,FALSE,0)
-  v2$SetChildPacking(hb2,FALSE,FALSE,0)
-
-  hb2$SetHomogeneous(FALSE)
-  hb2$Add(x <- gtkLabel("X Range"))
-  hb2$Add(v<-gtkVBox(2))
-
-  v$Add(xrang1.w<-gtkEntry())
-  v$Add(xrang2.w<-gtkEntry())
-
-  v2$Add(hb2<-gtkHBox(2))
-  v2$SetChildPacking(hb2,FALSE,FALSE,0)
-
-  hb2$SetHomogeneous(FALSE)
-  hb2$Add(gtkLabel("Y Range"))
-  hb2$Add(v<-gtkVBox(2))
-  v$Add(yrang1.w<-gtkEntry())
-  v$Add(yrang2.w<-gtkEntry())
-
-  v2$Add(nb2<-gtkNotebook())
-  v2$SetChildPacking(nb2,FALSE,FALSE,0)
-  nb2$AppendPage(v<-gtkVBox(4),gtkLabel("Bottom"))
-  v$Add(gtkLabel("Ticks"))
-  v$Add(x1.w <- gtkEntry())
-  v$Add(gtkLabel("Label"))
-  v$Add(x1label.w <- gtkEntry())
-
-  nb2$AppendPage(v<-gtkVBox(4),gtkLabel("Top"))
-  v$Add(gtkLabel("Ticks"))
-  v$Add(x2.w <- gtkEntry())
-  v$Add(gtkLabel("Label"))
-  v$Add(x2label.w <- gtkEntry())
-
-  nb2$AppendPage(v<-gtkVBox(4),gtkLabel("Left"))
-  v$Add(gtkLabel("Ticks"))
-  v$Add(y1.w <- gtkEntry())
-  v$Add(gtkLabel("Label"))
-  v$Add(y1label.w <- gtkEntry())
-
-  nb2$AppendPage(v<-gtkVBox(4),gtkLabel("Right"))
-  v$Add(gtkLabel("Ticks"))
-  v$Add(y2.w <- gtkEntry())
-  v$Add(gtkLabel("Label"))
-  v$Add(y2label.w <- gtkEntry())
-
-  v2$Add(hb2<-gtkHBox(2))
-  v2$SetChildPacking(hb2,FALSE,FALSE,0)
-  hb2$SetHomogeneous(FALSE)
-  hb2$Add(grill.w <- gtkCheckButton("Grilled?"))
-  hb2$Add(ticksdir.w <- gtkCheckButton("Ticks in?"))
-  v2$Add(f<-gtkFrame("Panel Placement"))
-  v2$SetChildPacking(f,FALSE,FALSE,0)
-  f$Add(v<-gtkVBox(2))
-  v$Add(hb<-gtkHBox(4))
-  hb$Add(gtkLabel("X"))
-  hb$Add(spinpanelx.w <- gtkSpinButton(climb=1,digits=0))
-  hb$Add(gtkLabel("Width"))
-  hb$Add(spinpanelw.w <- gtkSpinButton(climb=1,digits=0))
-  v$Add(hb<-gtkHBox(4))
-  hb$Add(gtkLabel("Y"))
-  hb$Add(spinpanely.w <- gtkSpinButton(climb=1,digits=0))
-  hb$Add(gtkLabel("Height"))
-  hb$Add(spinpanelh.w <- gtkSpinButton(climb=1,digits=0))
-
-  nb1$AppendPage(v2<-gtkVBox(2),gtkLabel("Element"))
-  v2$SetHomogeneous(FALSE)
-  v2$SetSpacing(0)
-  v2$Add(hb1<-gtkHBox(4))
-  hb1$SetHomogeneous(TRUE)
-  hb1$Add(element.apply.w <- gtkButton("Apply"))
-  hb1$Add(del.element.w <- gtkButton("Delete"))
-
-  sapply(list(element.apply.w,del.element.w),function(x){hb1$SetChildPacking(child=x,expand=TRUE,fill=TRUE,0)})
-
-  v2$SetChildPacking(hb1,FALSE,FALSE,0)
-  v2$Add(elements.w<-gtkCombo())
-  v2$SetChildPacking(elements.w,FALSE,FALSE,0)
-  v2$Add(symmenu.w<-gtkCombo())
-  v2$SetChildPacking(symmenu.w,FALSE,FALSE,0)
-  symmenu.w$SetPopdownStrings(.Symbol.Names)
-  symmenu.w$GetList()$SetSelectionMode(1)
-  v2$Add(linemenu.w<-gtkCombo())
-  v2$SetChildPacking(linemenu.w,FALSE,FALSE,0)
-  linemenu.w$SetPopdownStrings(.Line.Names)
-  linemenu.w$GetList()$SetSelectionMode(1)
-  v2$Add(h<-gtkHBox(2))
-  v2$SetChildPacking(h,FALSE,FALSE,0)
-  h$Add(v<-gtkVBox(2))
-  v$Add(gtkLabel("Symbol Size"))
-  v$Add(symsize.w <- gtkSpinButton(adjustment=gtkAdjustment(value=1,lower=0,upper=10,step.increment=0.5,page.increment=1,page.size=1),climb=10,digits=1))
-  h$Add(v<-gtkVBox(2))
-  v$Add(gtkLabel("Outline Width"))
-  v$Add(linsize.w <- gtkSpinButton(adjustment=gtkAdjustment(value=1,lower=0,upper=10,step.increment=0.5,page.increment=1,page.size=1),climb=10,digits=1))
-  v2$Add(x <- gtkLabel("Fill Color"))
-  v2$SetChildPacking(x,FALSE,FALSE,0)
-  v2$Add(fillcol.w <- gtkCombo())
-  v2$SetChildPacking(fillcol.w,FALSE,FALSE,0)
-  v2$Add(x <- gtkLabel("Line Color"))
-  v2$SetChildPacking(x,FALSE,FALSE,0)
-  v2$Add(linecol.w <- gtkCombo())
-  v2$SetChildPacking(linecol.w,FALSE,FALSE,0)
-  
-  v2$Add(f<-gtkFrame("Data"))
-  v2$SetChildPacking(f,FALSE,FALSE,0)
-
-  f$Add(h <- gtkHBox(2))
-  h$SetHomogeneous(FALSE)
-  
-  h$Add(va <- gtkVBox(4))
-  h$Add(vb <- gtkVBox(4))
-  va$Add(gtkLabel("Index:"))
-  vb$Add(index.w <- gtkSpinButton(adjustment=gtkAdjustment(value=1,lower=1,upper=1,step.increment=1,page.increment=10,page.size=10),climb=10,digits=0))
-
-  va$Add(gtkLabel("X"))
-  vb$Add(xdata.w <- gtkEntry())
-
-  va$Add(gtkLabel("Y"))
-  vb$Add(ydata.w <- gtkEntry())
-
-  va$Add(gtkLabel("W"))
-  vb$Add(wdata.w <- gtkEntry())
-
-  va$Add(gtkLabel("H"))
-  vb$Add(hdata.w <- gtkEntry())
-  
-  v2$Add(l <- gtkLabel("Apply Color/Symbol Values to:"))
-  v2$SetChildPacking(l,FALSE,FALSE,0)
-  v2$Add(cs.info.w <- gtkCombo())
-  v2$SetChildPacking(cs.info.w,FALSE,FALSE,0)
-  cs.info.w$SetPopdownStrings(.CS.INFO)
-    
-  nb1$AppendPage(v2<-gtkVBox(2),gtkLabel("Annotation"))
-  v2$SetHomogeneous(FALSE)
-  v2$SetSpacing(0)
-  v2$Add(hb1<-gtkHBox(4))
-  v2$SetChildPacking(hb1,FALSE,FALSE,0)
-  hb1$SetHomogeneous(TRUE)
-  hb1$Add(new.annot.w <- gtkToggleButton("Place New"))
-  new.annot.w$AddCallback("clicked",on.new.annot.clicked)
-  hb1$Add(applyannot.w  <- gtkButton("Apply"))
-  hb1$Add(deleteannot.w <- gtkButton("Delete"))
-  hb1$Add(newlegend.w <- gtkButton("Legend"))
-  newlegend.w$AddCallback("clicked",on.newlegend)
-
-  sapply(list(new.annot.w,applyannot.w,deleteannot.w,newlegend.w),function(x){hb1$SetChildPacking(child=x,expand=TRUE,fill=TRUE,0)})
-
-  v2$Add(ss<-gtkScrolledWindow())
-  ss$SetPolicy("never","always")
-  ss$Add(annot.text.w<-gtkText())
-  annot.text.w$SetEditable(TRUE)
-  ss$SetVadjustment(annot.text.w$GetVadj())
-
-  v2$Add(f <- gtkFrame("Text Properies"))
-  v2$SetChildPacking(f,FALSE,FALSE,0)
-  f$Add(v <- gtkVBox(3))
-  v$Add(h <- gtkHBox(2))
-  h$Add(gtkLabel("Points (0=default)"))
-  h$Add(text.points.w <- gtkSpinButton(adjustment=gtkAdjustment(value=0,lower=0,upper=30,step.increment=1,page.increment=5,page.size=5),climb=10,digits=0))
-  v$Add(h <- gtkHBox(2))
-  h$Add(gtkLabel("Face"))
-  h$Add(text.face.w <- gtkCombo())
-  text.face.w$SetPopdownStrings(.Face.Names)
-  v$Add(h <- gtkHBox(2))
-  h$Add(apply.text.figure.w <- gtkButton("Apply to Figure"))
-  apply.text.figure.w$AddCallback("clicked",on.apply.text.figure)
-  h$Add(apply.text.panel.w <- gtkButton("Apply to Panel"))
-  apply.text.panel.w$AddCallback("clicked",on.apply.text.panel)
-
-  v2$Add(x<-gtkLabel("Color"))
-  v2$SetChildPacking(x,FALSE,FALSE,0)
-  v2$Add(text.color.w <- gtkCombo())
-  v2$SetChildPacking(text.color.w,FALSE,FALSE,0)
-  v2$Add(x <- gtkLabel("Rotation"))
-  v2$SetChildPacking(x,FALSE,FALSE,0)
-  v2$Add(rotatetext.w <- gtkSpinButton(adjustment=gtkAdjustment(value=0,lower=-180,upper=180,step.increment=15,page.increment=90,page.size=90),climb.rate=1,digits=0))
-  v2$SetChildPacking(rotatetext.w,FALSE,FALSE,0)
-  v2$Add(text.frame.w <- gtkCheckButton("Framed?"))
-  v2$SetChildPacking(text.frame.w,FALSE,FALSE,0)
-
-  menubar1$Add(file1<-gtkMenuItem("File"))
-  file1$SetSubmenu(file.sub <- gtkMenu())
-  file.sub$Append(save <- gtkMenuItem("Save"))
-  save$AddCallback("activate",on.save1.activate)
-  file.sub$Append(save.as.1 <- gtkMenuItem("Save As"))
-  save.as.1$AddCallback("activate",on.saveas1.activate)
-  file.sub$Append(open1 <- gtkMenuItem("Open"))
-  open1$AddCallback("activate",on.open1.activate)
-  file.sub$Append(separator <- gtkMenuItem())
-  file.sub$Append(downld.file <- gtkMenuItem("Download From File"))
-  downld.file$AddCallback("activate",downld.file.Action)
-  file.sub$Append(upld.file <- gtkMenuItem("Upload To File"))
-  upld.file$AddCallback("activate",upld.file.Action)
-  file.sub$Append(separator <- gtkMenuItem())
-  file.sub$Append(print1 <- gtkMenuItem("Print"))
-  print1$SetSubmenu(print.dev<-gtkMenu())
-  sapply(c("PS","PDF","PNG","PDFwrite"),function(x){
-    print.dev$Append(w <- gtkMenuItem(x))
-    w$SetName(x)
-    w$AddCallback("activate",on.print1)
-  })
-  file.sub$Append(separator <- gtkMenuItem())
-  file.sub$Append(quit <- gtkMenuItem("Quit"))
-  ggRDev.w$AddCallback("delete-event",on.ggRDev.destroy)
-  quit$AddCallback("activate",on.ggRDev.destroy)
-
-  menubar1$Add(edit1<-gtkMenuItem("Edit"))
-  edit1$SetSubmenu(edit1.sub <- gtkMenu())
-  edit1.sub$Append(copy.element1 <- gtkMenuItem("Copy Element"))
-  copy.element1$AddCallback("activate",on.kill.element1)
-  edit1.sub$Append(copy.panel1 <- gtkMenuItem("Copy Panel"))
-  copy.panel1$AddCallback("activate",on.kill.panel1)
-  edit1.sub$Append(paste1 <- gtkMenuItem("Paste"))
-  paste1$AddCallback("activate",on.yank1)
-
-  inter1$SetMenu(inter1.sub <- gtkMenu())
-  inter1.sub$Append(select.element1 <- gtkMenuItem("Select Element"))
-  inter1.sub$Append(select.annotation1 <- gtkMenuItem("Select Annotation"))
-  inter1.sub$Append(select.region1 <- gtkMenuItem("Select Region"))
-  inter1.sub$Append(select.points1 <- gtkMenuItem("Select Points"))
-  inter1.sub$Append(select.zoom1 <- gtkMenuItem("Select Zoom"))
-
-  lapply(c("select.element1","select.zoom1","select.annotation1","select.region1","select.points1","select.zoom1"),
-         function(x){
-           get(x)$AddCallback("activate",select.interaction)
-           get(x)$SetName(x)
-         })
-
-  inter1$SetHistory(0)
-  
-  button1.w$AddCallback("clicked",on.button1.clicked)
-  autorngbtn.w$AddCallback("clicked",autorange)
-  elements.w$GetList()$AddCallback("select-child",on.sel.element)
-  element.apply.w$AddCallback("clicked",do.apply.element)
-  del.element.w$AddCallback("clicked",on.delete.element)
-  applyannot.w$AddCallback("clicked",on.apply.annot)
-  deleteannot.w$AddCallback("clicked",on.delete.annot)
-  index.w$AddCallback("changed",on.change.index)
-
+  a$SetBuffer(annot.text.w)
+  drawingarea1.w$SetSizeRequest(width,height)
   lapply(c(spinpanelx.w,spinpanely.w,spinpanelw.w,spinpanelh.w),
          function(x){x$SetAdjustment(gtkAdjustment(1,1,cells,1,1,0))})
-#  drawingarea1.w$SetUsize(width,height)
-  drawingarea1.w$Size(width,height)
+  cs.info.w$SetPopdownStrings(.CS.INFO)
+#  cs.info.w$SetActive(0)
+  symmenu.w$SetPopdownStrings(.Symbol.Names)
+  linemenu.w$SetPopdownStrings(.Line.Names)
+  colorlist <- c(palette(),"default")
+  fillcol.w$SetPopdownStrings(colorlist)
+  linecol.w$SetPopdownStrings(colorlist)
+  text.color.w$SetPopdownStrings(colorlist)
+  text.color.w$SetActive(which(colorlist=="default")-1)
+  text.face.w$SetPopdownStrings(.Face.Names)
+  errstyle.w$SetPopdownStrings(.Err.Style)
   gdkFlush()
-  asGtkDevice(drawingarea1.w,width=width,height=height,pointsize=12)  
+  asCairoDevice(drawingarea1.w)
+  N<-gdkGC(drawingarea1.w$GetWindow())
+  N$SetFunction(GdkFunction["xor"])
+#  N$SetForeground(c(1024,0,0,0))
+  N$SetRgbFgColor(c(0,65000,0))
+  N$SetLineAttributes(1,GdkLineStyle["solid"],GdkCapStyle["butt"],GdkJoinStyle["miter"])
+  N$SetFill(GdkFill["solid"])
 
-  drawingarea1.w$AddCallback("motion_notify_event",stroke)
-  drawingarea1.w$AddCallback("configure_event",on.resize)
-  drawingarea1.w$AddCallback("button-press-event",start.stroke)
-  drawingarea1.w$AddCallback("button-release-event",end.stroke)
-  drawingarea1.w$AddCallback("key-press-event",hit.key)
+  crosshair<-function(x,y){
+    w<-drawingarea1.w$GetWindow()
+    gdkDrawLine(w,N,x,0,x,10000)
+    gdkDrawLine(w,N,0,y,10000,y)
+  }
 
+#  try(gladeXMLAutoconnect(XML,do.connect))
+  try(gladeXMLSignalAutoconnectFull(XML,function(handler,obj,signal,...){
+    try(obj$AddCallback(signal,get(handler)))
+  },"TheEnd"))
   fig <- figure.back(width=width,height=height,cells=cells)
   fig$PANEL.CB <- panel.GUI
   fig$ANNOTATION.CB <- annotation.GUI
   fig$ELEMENT.CB <- element.GUI
-  combo1.w$GetList()$AddCallback( "select-child",on.select.panel)
-  colorlist <- c(palette(),"default")
-  fillcol.w$SetPopdownStrings(colorlist)
-  fillcol.w$GetList()$SetSelectionMode(1)
-  linecol.w$SetPopdownStrings(colorlist)
-  linecol.w$GetList()$SetSelectionMode(1)
-  text.color.w$SetPopdownStrings(colorlist)
-  text.color.w$GetList()$SelectItem(which(colorlist=="default")-1)
   try(figure.startup(environment()))
   gdkFlush()
   ggRDev.w$ShowAll()
 #  fig$set.active()
+	
   return(fig)
 }
 
-.z.interface <- function(width=1000,height=2000,cells=10){
-  redraw <- function(...){
-#    v()
-  }
-#  start.view()
-  fig <- figure.back(width=width,height=height,cells=cells)
-  fig$PANEL.CB <- redraw
-  fig$ANNOTATION.CB <- redraw
-  fig$ELEMENT.CB <- redraw
-  return(fig)
-
-}
-
-figure <- .GTK.interface
-
-
+figure <- .GTK2.interface

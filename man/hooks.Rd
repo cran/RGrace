@@ -7,13 +7,13 @@
 \alias{on.select.points}
 \alias{figure.startup}
 \alias{simple.calculus}
-\alias{spline.data}
+\alias{spline.curve}
 \alias{spline.points}
 \alias{move.indexed}
 \alias{move.indexed.y}
 \alias{delete.in.range}
-\alias{sort.data}
-\alias{smooth.data}
+\alias{xsort.curve}
+\alias{smooth.curve}
 \alias{lf.in.range}
 \alias{default.hook}
 \alias{default.annotation}
@@ -114,16 +114,16 @@ figure.startup(figure)
 	most common operations with graphics. Note that  most of them require
 	\code{stats} package which is  not imported automatically when
 	RGrace is loaded: 
-	\begin{itemize}
+	\begin{description}
 	\item{\code{spline.points}}{
 	  - suited for \code{on.select.points}
 	  to draw a smoothed spline through points user has selected (
 	  it uses \code{\link[stats]{smooth.spline}} function)	  
 	}
-	\item{\code{spline.data}}{
+	\item{\code{spline.curve}}{
 	  - draws a smoothed spline through selected data curve	  
 	}
-	\item{\code{smooth.data}}{
+	\item{\code{smooth.curve}}{
 	  - draws a smoothed curve through existing one (uses
 	  \code{\link[stats]{ksmooth}} function)
 	  
@@ -131,7 +131,7 @@ figure.startup(figure)
 	\item{\code{delete.in.range}}{
 	    - deletes selected points from selected data line.
 	    }
-	\item{\code{sort.data}}{
+	\item{\code{xsort.curve}}{
 	      - sorts points in selected data line
 	      according to theirs x-coordinates.
 	    }
@@ -151,7 +151,7 @@ figure.startup(figure)
 	points which falls in the selected range. Line fit parameters
 	are returned in the global variable \code{.LF}.
       }
-      	\end{itemize}
+      	\end{description}
 
 	Default hooks can be restored at any moment with command
 	\code{default.hooks()}.
